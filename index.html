@@ -1,0 +1,4607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSF + Qualificação e Renda</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Adicionando SheetJS para leitura de Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Adicionando Chart.js para gráfico pizza -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Adicionando html2canvas para captura de tela -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --background: #0f172a;
+            --sidebar: #020617;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --overlay: rgba(0, 0, 0, 0.7);
+            --card: #1e293b; /* Adicionado para consistência */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .login-overlay.hidden {
+            display: none;
+        }
+
+        .login-card {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .login-logo .material-icons {
+            font-size: 40px;
+            color: var(--primary);
+        }
+
+        .login-logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 14px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo .material-icons {
+            font-size: 32px;
+            color: var(--primary);
+        }
+
+        .sidebar-logo h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .sidebar-logo span {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--surface);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .nav-item .material-icons {
+            font-size: 22px;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-details h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-details span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-left: auto;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: var(--surface);
+            color: var(--danger);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box .material-icons {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 12px 12px 44px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-icon {
+            padding: 10px;
+            aspect-ratio: 1;
+        }
+
+        .btn .material-icons {
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover .material-icons {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Transformando KPI cards em cards interativos com animações */
+        .kpi-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+        .kpi-card:hover .kpi-icon {
+            transform: rotate(10deg) scale(1.1);
+        }
+
+        .kpi-icon::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 14px;
+            padding: 2px;
+            background: linear-gradient(135deg, currentColor, transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .kpi-card:hover .kpi-icon::after {
+            opacity: 0.6;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .kpi-icon.purple { 
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.3)); 
+            color: #c4b5fd;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+        .kpi-icon.green { 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.3)); 
+            color: #6ee7b7;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        .kpi-icon.blue { 
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3)); 
+            color: #93c5fd;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        .kpi-icon.orange { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3)); 
+            color: #fcd34d;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .kpi-card:hover .kpi-value {
+            transform: scale(1.05);
+            color: var(--primary);
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .kpi-card:hover .kpi-label {
+            color: var(--text-secondary);
+        }
+
+        /* Course Cards */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Cards de cursos com animações mais interativas */
+        .course-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .course-card:hover::before {
+            left: 100%;
+        }
+
+        .course-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .course-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .course-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .course-card:hover .course-title {
+            color: var(--primary);
+        }
+
+        .course-id {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .course-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .course-actions button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .course-actions button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 8px;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .course-actions button:hover::before {
+            opacity: 0.1;
+        }
+
+        .course-actions button:hover {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .course-actions button:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .course-actions button.delete:hover {
+            color: var(--danger);
+        }
+
+        .course-actions button.drive:hover {
+            color: var(--success);
+        }
+
+        .course-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .course-info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .course-info-item .material-icons {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        /* Estilo para anotação do curso no card */
+        .course-note {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid var(--primary);
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .course-note .material-icons {
+            font-size: 16px;
+            color: var(--primary);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .course-note-text {
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        /* Adicionando animação pulsante aos status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .status-badge.concluido { 
+            background: rgba(16, 185, 129, 0.15); 
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+        .status-badge.andamento { 
+            background: rgba(59, 130, 246, 0.15); 
+            color: #60a5fa;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        .status-badge.pendente { 
+            background: rgba(245, 158, 11, 0.15); 
+            color: #fbbf24;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+        .status-badge.cancelado { 
+            background: rgba(239, 68, 68, 0.15); 
+            color: #f87171;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-input.error, .form-select.error, .form-textarea.error {
+            border-color: var(--danger);
+        }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Label opcional para campos não obrigatórios */
+        .optional-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        /* Calendar */
+        .calendar-container {
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            /* Adicionando efeitos de hover e transições suaves */
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-container:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            /* Adicionando gradiente sutil no header */
+            background: linear-gradient(135deg, var(--surface) 0%, rgba(99, 102, 241, 0.05) 100%);
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .calendar-nav button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            /* Melhorando animações dos botões de navegação */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calendar-nav button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .calendar-nav button:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .calendar-nav button:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .calendar-nav button:active {
+            transform: scale(0.95);
+        }
+
+        .calendar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            /* Adicionando gradiente de texto */
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .calendar-day-header {
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            background: var(--background);
+            /* Adicionando animação de pulso nos headers */
+            animation: headerPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes headerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .calendar-day {
+            min-height: 100px;
+            padding: 0.5rem;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            /* Adicionando transições e efeitos hover interativos */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calendar-day::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .calendar-day:hover::before {
+            opacity: 1;
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+
+        .calendar-day.other-month {
+            background: var(--background);
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .calendar-day.other-month:hover {
+            opacity: 0.8;
+        }
+
+        .calendar-day.today {
+            background: rgba(99, 102, 241, 0.1);
+            /* Adicionando animação de brilho no dia atual */
+            position: relative;
+            animation: todayGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes todayGlow {
+            0%, 100% {
+                box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.2);
+            }
+            50% {
+                box-shadow: inset 0 0 30px rgba(99, 102, 241, 0.4);
+            }
+        }
+
+        .calendar-date {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+
+        .calendar-day:hover .calendar-date {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .calendar-day.today .calendar-date {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Adicionando animação de pulso no dia atual */
+            animation: datePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes datePulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .calendar-event {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            z-index: 1;
+            /* Adicionando transições e efeitos nos eventos */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left center;
+        }
+
+        .calendar-event:hover {
+            transform: scale(1.05) translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        .calendar-event.start { 
+            background: var(--success); 
+            color: white;
+            /* Adicionando animação de entrada */
+            animation: eventSlideIn 0.5s ease-out;
+        }
+        
+        .calendar-event.end { 
+            background: var(--danger); 
+            color: white;
+            animation: eventSlideIn 0.5s ease-out;
+        }
+        
+        .calendar-event.ongoing { 
+            background: var(--info); 
+            color: white;
+            animation: eventSlideIn 0.5s ease-out;
+        }
+
+        @keyframes eventSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Adicionando estilo para o botão "Hoje" */
+        #todayBtn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #todayBtn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        #todayBtn:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+
+        #todayBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        #todayBtn:active {
+            transform: translateY(0);
+        }
+
+        /* Pages */
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Instructors */
+        .instructor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .instructor-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .instructor-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0 auto 1rem;
+        }
+
+        .instructor-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .instructor-specialty {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .instructor-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .instructor-stat {
+            text-align: center;
+        }
+
+        .instructor-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .instructor-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .instructor-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .instructor-actions .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .instructor-actions .btn-whatsapp:hover {
+            background: #128C7E;
+        }
+
+        /* Settings */
+        .settings-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .settings-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .settings-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text);
+        }
+
+        .settings-card h3 .material-icons {
+            color: var(--primary);
+            font-size: 28px;
+        }
+
+        .settings-card .description {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 3.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(99, 102, 241, 0.05) 100%);
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .file-upload-area:hover::before {
+            opacity: 1;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.12) 100%);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+        }
+
+        .file-upload-area .material-icons {
+            font-size: 64px;
+            color: var(--primary);
+            margin-bottom: 1.25rem;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .file-upload-area:hover .material-icons {
+            transform: scale(1.1);
+        }
+
+        .file-upload-area .upload-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 0.75rem 0;
+            line-height: 1.4;
+        }
+
+        .file-upload-area .upload-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+
+        .file-upload-area .upload-formats {
+            font-size: 0.875rem;
+            color: var(--primary);
+            margin: 0.75rem 0 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .file-upload-area .upload-columns {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0.5rem auto 0 auto;
+            max-width: 90%;
+            line-height: 1.4;
+        }
+
+        .file-info {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background: var(--background);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .file-info .material-icons {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .file-info p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .export-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .export-actions .btn {
+            justify-content: center;
+        }
+
+        .danger-zone {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .danger-zone-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ef4444;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .danger-zone-title .material-icons {
+            font-size: 20px;
+        }
+
+        .danger-zone-description {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .material-icons {
+            font-size: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Users Section */
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .users-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .users-table tr:hover td {
+            background: var(--surface-hover);
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .role-badge.admin { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .role-badge.editor { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .role-badge.viewer { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+        /* Novo layout do Activity Log - estilo timeline moderno */
+        .activity-log {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .activity-log-grid {
+            display: grid;
+            gap: 0;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 1rem 0;
+            position: relative;
+        }
+
+        .activity-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 48px;
+            bottom: -8px;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .activity-icon.add { background: var(--success); color: white; }
+        .activity-icon.edit { background: var(--info); color: white; }
+        .activity-icon.delete { background: var(--danger); color: white; }
+
+        .activity-content {
+            flex: 1;
+            background: var(--background);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .activity-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--surface);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .activity-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .activity-user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .activity-user .material-icons {
+            font-size: 14px;
+        }
+
+        /* Novo layout do Relatório Geral */
+        .report-preview {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            color: #ffffff;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .report-header h2 {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .report-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+
+        .report-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-kpi-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .report-kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .report-kpi-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .report-kpi-card.green .report-kpi-value { color: #34d399; }
+        .report-kpi-card.blue .report-kpi-value { color: #60a5fa; }
+        .report-kpi-card.yellow .report-kpi-value { color: #fbbf24; }
+        .report-kpi-card.red .report-kpi-value { color: #f87171; }
+        .report-kpi-card.purple .report-kpi-value { color: #a78bfa; }
+
+        .report-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .report-section h3 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-section h3 .material-icons {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .report-table th {
+            background: rgba(255,255,255,0.05);
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .report-table td {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .report-table tr:hover td {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .report-chart {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .report-city-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .report-city-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-city-name {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .report-city-count {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Course Details */
+        .course-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .course-detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .course-detail-item .material-icons {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .course-detail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .course-detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .course-detail-value a {
+            color: var(--info);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .course-detail-value a:hover {
+            text-decoration: underline;
+        }
+
+        /* Seção de mudar senha */
+        .password-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .courses-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .calendar-day {
+                min-height: 60px;
+            }
+
+            .calendar-event {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+
+            .report-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Novo design interativo para a aba de configurações */
+        .settings-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), #a855f7, var(--primary));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .settings-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .settings-card:hover {
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .settings-section-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .settings-icon-large {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3); }
+            50% { box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5); }
+        }
+
+        .settings-icon-large .material-icons {
+            font-size: 40px;
+            color: white;
+        }
+
+        .settings-header-content h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .settings-header-content p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .interactive-upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Fixed padding to prevent content cutoff */
+            padding: 4rem 2.5rem;
+            min-height: 350px;
+            border: 3px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 24px;
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(168, 85, 247, 0.03));
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: visible;
+            margin: 2rem 0;
+        }
+
+        .interactive-upload-zone::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease;
+            pointer-events: none;
+        }
+
+        .interactive-upload-zone:hover::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .interactive-upload-zone:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08));
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.25);
+            border-width: 3px;
+        }
+
+        .interactive-upload-zone.drag-over {
+            border-color: #a855f7;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(99, 102, 241, 0.15));
+            transform: scale(1.05);
+        }
+
+        .upload-icon-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-icon-bg {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.3);
+            transition: all 0.4s ease;
+            /* Removed z-index that was causing overlap issues */
+        }
+
+        .upload-icon-bg .material-icons {
+            font-size: 64px;
+            color: white;
+            animation: bounce-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .interactive-upload-zone:hover .upload-icon-bg {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 16px 48px rgba(99, 102, 241, 0.4);
+        }
+
+        .interactive-upload-zone:hover .upload-icon-bg .material-icons {
+            color: white;
+        }
+
+        .upload-text-main {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            /* Added margin-top for proper spacing */
+            margin-top: 1.5rem;
+        }
+
+        .upload-text-sub {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .upload-format-tags {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .format-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50px;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .format-tag .material-icons {
+            font-size: 20px;
+        }
+
+        .interactive-upload-zone:hover .format-tag {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .file-selected-display {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1));
+            border: 2px solid rgba(34, 197, 94, 0.5);
+            border-radius: 16px;
+            margin-top: 1.5rem;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-selected-display.show {
+            display: flex;
+        }
+
+        .file-selected-display .material-icons {
+            font-size: 32px;
+            color: #22c55e;
+        }
+
+        .file-info-text {
+            flex: 1;
+        }
+
+        .file-info-text strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .file-info-text span {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .columns-info-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .columns-info-card .material-icons {
+            font-size: 28px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .columns-info-card strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .columns-info-card p {
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .export-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-button-card {
+            background: linear-gradient(135deg, var(--card), rgba(99, 102, 241, 0.02));
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .export-button-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .export-button-card:hover::before {
+            left: 100%;
+        }
+
+        .export-button-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 16px 48px rgba(99, 102, 241, 0.2);
+        }
+
+        .export-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+        }
+
+        .export-button-card:hover .export-icon-wrapper {
+            transform: rotate(360deg) scale(1.1);
+        }
+
+        .export-icon-wrapper .material-icons {
+            font-size: 40px;
+            color: white;
+        }
+
+        .export-button-card h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .export-button-card p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .danger-zone-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.05));
+            border: 2px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .danger-zone-card:hover {
+            border-color: #ef4444;
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15);
+        }
+
+        .danger-zone-card .settings-icon-large {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse-danger 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 12px 32px rgba(239, 68, 68, 0.5); }
+        }
+
+        .danger-warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .danger-warning-box .material-icons {
+            font-size: 28px;
+            color: #ef4444;
+        }
+
+        .danger-warning-box p {
+            color: var(--text);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .danger-warning-box strong {
+            color: #ef4444;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <span class="material-icons">cloud_sync</span>
+                <h1>CSF Manager</h1>
+            </div>
+            <div class="login-error" id="loginError">
+                Credenciais inválidas. Tente novamente.
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Usuário</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="Digite seu usuário" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span class="material-icons">login</span>
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <!-- Substituindo cloud_sync por school para representar cursos -->
+                    <span class="material-icons">school</span>
+                    <!-- Alterando nome do sistema -->
+                    <h1>CSF + Qualificação e Renda
+                        <span>Cloud Sync Realtime</span>
+                    </h1>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-page="dashboard">
+                    <span class="material-icons">dashboard</span>
+                    Dashboard
+                </div>
+                <div class="nav-item" data-page="calendar">
+                    <span class="material-icons">calendar_month</span>
+                    Calendário
+                </div>
+                <div class="nav-item" data-page="instructors">
+                    <span class="material-icons">people</span>
+                    Instrutores
+                </div>
+                <div class="nav-item" data-page="users" id="usersNavItem" style="display: none;">
+                    <span class="material-icons">admin_panel_settings</span>
+                    Usuários
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <span class="material-icons">settings</span>
+                    Configurações
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <h4 id="userName">Admin</h4>
+                        <span id="userRole">Administrador</span>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn" title="Sair">
+                        <span class="material-icons">logout</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <section class="page-section active" id="dashboardPage">
+                <div class="header">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <span class="material-icons">menu</span>
+                    </button>
+                    <div class="search-box">
+                        <span class="material-icons">search</span>
+                        <input type="text" placeholder="Buscar cursos..." id="searchInput">
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="reportBtn">
+                            <span class="material-icons">summarize</span>
+                            Relatório
+                        </button>
+                        <button class="btn btn-primary" id="newCourseBtn">
+                            <span class="material-icons">add</span>
+                            Novo Curso
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon purple">
+                                <span class="material-icons">school</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="totalCourses">0</div>
+                        <div class="kpi-label">Total de Cursos</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon green">
+                                <span class="material-icons">check_circle</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="completedCourses">0</div>
+                        <div class="kpi-label">Concluídos</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon blue">
+                                <span class="material-icons">pending</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="ongoingCourses">0</div>
+                        <div class="kpi-label">Em Andamento</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-icon orange">
+                                <span class="material-icons">groups</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="totalStudents">0</div>
+                        <div class="kpi-label">Total Concludentes</div>
+                    </div>
+                </div>
+
+                <!-- Courses Grid -->
+                <div class="courses-grid" id="coursesGrid">
+                    <!-- Courses will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Calendar Page -->
+            <section class="page-section" id="calendarPage">
+                <div class="page-header">
+                    <h2 class="page-title">Calendário</h2>
+                </div>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-nav">
+                            <button id="prevMonth">
+                                <span class="material-icons">chevron_left</span>
+                            </button>
+                            <h3 class="calendar-title" id="calendarTitle">Dezembro 2024</h3>
+                            <button id="nextMonth">
+                                <span class="material-icons">chevron_right</span>
+                            </button>
+                        </div>
+                        <button class="btn btn-secondary" id="todayBtn">Hoje</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be rendered here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Instructors Page -->
+            <section class="page-section" id="instructorsPage">
+                <div class="page-header">
+                    <h2 class="page-title">Instrutores</h2>
+                    <button class="btn btn-primary" id="newInstructorBtn">
+                        <span class="material-icons">person_add</span>
+                        Novo Instrutor
+                    </button>
+                </div>
+                <div class="instructor-grid" id="instructorGrid">
+                    <!-- Instructors will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Users Page (Admin Only) -->
+            <section class="page-section" id="usersPage">
+                <div class="page-header">
+                    <h2 class="page-title">Gerenciar Usuários</h2>
+                    <button class="btn btn-primary" id="newUserBtn">
+                        <span class="material-icons">person_add</span>
+                        Novo Usuário
+                    </button>
+                </div>
+                
+                <!-- Adicionando seção para alterar nome do administrador -->
+                <div class="settings-card">
+                    <h3>
+                        <span class="material-icons">badge</span>
+                        Alterar Meu Nome
+                    </h3>
+                    <form id="changeNameForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Nome Atual</label>
+                                <input type="text" class="form-input" id="currentNameDisplay" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Novo Nome</label>
+                                <input type="text" class="form-input" id="newAdminName" placeholder="Digite o novo nome">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-icons">save</span>
+                            Alterar Nome
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Seção de mudar senha do admin -->
+                <div class="settings-card">
+                    <h3>
+                        <span class="material-icons">lock</span>
+                        Alterar Minha Senha
+                    </h3>
+                    <form id="changePasswordForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Senha Atual</label>
+                                <input type="password" class="form-input" id="currentPassword" placeholder="Digite sua senha atual">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nova Senha</label>
+                                <input type="password" class="form-input" id="newPassword" placeholder="Digite a nova senha">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-input" id="confirmPassword" placeholder="Confirme a nova senha">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-icons">save</span>
+                            Alterar Senha
+                        </button>
+                    </form>
+                </div>
+
+                <div class="settings-card">
+                    <h3>
+                        <span class="material-icons">group</span>
+                        Lista de Usuários
+                    </h3>
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Função</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Users will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Novo layout do log de atividades -->
+                <div class="settings-card">
+                    <h3>
+                        <span class="material-icons">history</span>
+                        Log de Atividades
+                    </h3>
+                    <div class="activity-log" id="activityLog">
+                        <!-- Activity log will be rendered here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Page -->
+            <section class="page-section" id="settingsPage">
+                <div class="page-header">
+                    <h2 class="page-title">Configurações</h2>
+                </div>
+
+                <!-- Seção de importação com design interativo e animado -->
+                <div class="settings-card">
+                    <div class="settings-section-header">
+                        <div class="settings-icon-large">
+                            <span class="material-icons">cloud_upload</span>
+                        </div>
+                        <div class="settings-header-content">
+                            <h3>Importar Dados</h3>
+                            <p>Importe cursos em lote usando planilhas Excel de forma rápida e fácil</p>
+                        </div>
+                    </div>
+                    
+                    <label class="interactive-upload-zone" for="excelFileInput" id="uploadZone">
+                        <div class="upload-icon-container">
+                            <div class="upload-icon-bg">
+                                <span class="material-icons">file_upload</span>
+                            </div>
+                        </div>
+                        <div class="upload-text-main">Arraste seu arquivo aqui</div>
+                        <div class="upload-text-sub">ou clique para selecionar do seu computador</div>
+                        <div class="upload-format-tags">
+                            <span class="format-tag">
+                                <span class="material-icons">description</span>
+                                Excel (.xlsx)
+                            </span>
+                            <span class="format-tag">
+                                <span class="material-icons">table_chart</span>
+                                Excel (.xls)
+                            </span>
+                        </div>
+                    </label>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                    
+                    <div class="file-selected-display" id="fileInfoBox">
+                        <span class="material-icons">check_circle</span>
+                        <div class="file-info-text">
+                            <strong>Arquivo selecionado:</strong>
+                            <span id="selectedFileName"></span>
+                        </div>
+                    </div>
+
+                    <div class="columns-info-card">
+                        <span class="material-icons">info</span>
+                        <div>
+                            <strong>Colunas esperadas na planilha:</strong>
+                            <p>CURSO • ID • LOTE • CIDADE • INÍCIO • FIM • CARGA HORÁRIA</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção de exportação com cards interativos e animados -->
+                <div class="settings-card">
+                    <div class="settings-section-header">
+                        <div class="settings-icon-large">
+                            <span class="material-icons">download</span>
+                        </div>
+                        <div class="settings-header-content">
+                            <h3>Exportar Dados</h3>
+                            <p>Faça download dos seus dados em formato CSV para backup ou análise</p>
+                        </div>
+                    </div>
+                    
+                    <div class="export-buttons-grid">
+                        <button class="export-button-card" id="exportCoursesBtn">
+                            <div class="export-icon-wrapper">
+                                <span class="material-icons">school</span>
+                            </div>
+                            <h4>Exportar Cursos</h4>
+                            <p>Lista completa de todos os cursos cadastrados</p>
+                        </button>
+                        
+                        <button class="export-button-card" id="exportInstructorsBtn">
+                            <div class="export-icon-wrapper">
+                                <span class="material-icons">people</span>
+                            </div>
+                            <h4>Exportar Instrutores</h4>
+                            <p>Todos os instrutores e suas informações</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Zona de perigo com visual de alerta interativo -->
+                <div class="settings-card danger-zone-card">
+                    <div class="settings-section-header">
+                        <div class="settings-icon-large">
+                            <span class="material-icons">warning</span>
+                        </div>
+                        <div class="settings-header-content">
+                            <h3>Zona de Perigo</h3>
+                            <p>Ações irreversíveis que afetam todo o sistema</p>
+                        </div>
+                    </div>
+                    
+                    <div class="danger-warning-box">
+                        <span class="material-icons">error</span>
+                        <p>Esta ação irá excluir <strong>permanentemente</strong> todos os cursos, instrutores e dados relacionados. Esta operação <strong>não pode ser desfeita</strong>. Proceda com extrema cautela.</p>
+                    </div>
+                    
+                    <button class="btn btn-danger" id="clearDataBtn">
+                        <span class="material-icons">delete_forever</span>
+                        Limpar Todos os Dados do Sistema
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Course Modal - Campos opcionais -->
+    <div class="modal-overlay" id="courseModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="courseModalTitle">Novo Curso</h3>
+                <button class="modal-close" onclick="closeModal('courseModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="courseForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Curso <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="courseName" placeholder="Ex: Segurança do Trabalho NR-10">
+                        <span class="form-error" id="courseNameError">Nome do curso é obrigatório</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ID da Turma <span class="optional-label">(opcional)</span></label>
+                            <input type="number" class="form-input" id="courseIdLote" placeholder="Ex: 1234">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Lote/Responsável <span class="optional-label">(opcional)</span></label>
+                            <input type="text" class="form-input" id="courseLoteResponsavel" placeholder="Ex: Lote A">
+                        </div>
+                    </div>
+                    <!-- Adicionando campo de Carga Horária com 3 opções -->
+                    <div class="form-group">
+                        <label class="form-label">Carga Horária</label>
+                        <select class="form-select" id="courseCargaHoraria">
+                            <option value="">Selecione a carga horária</option>
+                            <option value="20H">20H</option>
+                            <option value="40H">40H</option>
+                            <option value="60H">60H</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Cidade <span class="optional-label">(opcional)</span></label>
+                            <input type="text" class="form-input" id="courseCity" placeholder="Ex: São Paulo">
+                            <span class="form-error" id="courseCityError">Cidade é obrigatória</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Local <span class="optional-label">(opcional)</span></label>
+                            <input type="text" class="form-input" id="courseLocation" placeholder="Ex: Centro de Treinamento">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Data Início <span class="optional-label">(opcional)</span></label>
+                            <input type="date" class="form-input" id="courseStart">
+                            <span class="form-error" id="courseStartError">Data de início é obrigatória</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Fim <span class="optional-label">(opcional)</span></label>
+                            <input type="date" class="form-input" id="courseEnd">
+                            <span class="form-error" id="courseEndError">Data de fim é obrigatória</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="courseStatus">
+                                <option value="Pendente">Pendente</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Concluído">Concluído</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Concludentes <span class="optional-label">(opcional)</span></label>
+                            <input type="number" class="form-input" id="courseStudents" placeholder="0" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instrutor <span class="optional-label">(opcional)</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <select class="form-select" id="courseInstructor" style="flex: 1;">
+                                <option value="">Selecione um instrutor</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-icon" onclick="openQuickInstructorModal()" title="Adicionar Instrutor">
+                                <span class="material-icons">person_add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Link do Google Drive <span class="optional-label">(opcional)</span></label>
+                        <input type="url" class="form-input" id="courseDriveLink" placeholder="https://drive.google.com/...">
+                    </div>
+                    <!-- Campo de anotação do curso -->
+                    <div class="form-group">
+                        <label class="form-label">Anotação <span class="optional-label">(opcional)</span></label>
+                        <textarea class="form-input" id="courseNote" placeholder="Digite uma anotação que ficará visível no card do curso..." rows="3" style="resize: vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('courseModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">save</span>
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Course Modal -->
+    <div class="modal-overlay" id="viewCourseModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="viewCourseTitle">Detalhes do Curso</h3>
+                <button class="modal-close" onclick="closeModal('viewCourseModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body" id="viewCourseBody">
+                <!-- Course details will be rendered here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('viewCourseModal')"> Fechar</button>
+                <button type="button" class="btn btn-primary" id="editCourseFromViewBtn">
+                    <span class="material-icons">edit</span>
+                    Editar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructor Modal - Campos opcionais -->
+    <div class="modal-overlay" id="instructorModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="instructorModalTitle">Novo Instrutor</h3>
+                <button class="modal-close" onclick="closeModal('instructorModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="instructorForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nome <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="instructorName" placeholder="Nome completo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Especialidade <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="instructorSpecialty" placeholder="Ex: Segurança do Trabalho">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefone <span class="optional-label">(opcional)</span></label>
+                        <input type="tel" class="form-input" id="instructorPhone" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="optional-label">(opcional)</span></label>
+                        <input type="email" class="form-input" id="instructorEmail" placeholder="email@exemplo.com">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('instructorModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">save</span>
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Instructor Modal -->
+    <div class="modal-overlay" id="quickInstructorModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Adicionar Instrutor Rápido</h3>
+                <button class="modal-close" onclick="closeModal('quickInstructorModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="quickInstructorForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Instrutor <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="quickInstructorName">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('quickInstructorModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">add</span>
+                        Adicionar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Modal - Campos opcionais -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Novo Usuário</h3>
+                <button class="modal-close" onclick="closeModal('userModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="userForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nome <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="newUserName" placeholder="Nome do usuário">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Usuário (login) <span class="optional-label">(opcional)</span></label>
+                        <input type="text" class="form-input" id="newUserUsername" placeholder="Nome de usuário para login">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="optional-label">(opcional)</span></label>
+                        <input type="email" class="form-input" id="newUserEmail" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha <span class="optional-label">(opcional)</span></label>
+                        <input type="password" class="form-input" id="newUserPassword" placeholder="Senha do usuário">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Função</label>
+                        <select class="form-select" id="newUserRole">
+                            <option value="viewer">Visualizador</option>
+                            <option value="editor">Editor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">save</span>
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Relatório de Cursos</h3>
+                <button class="modal-close" onclick="closeModal('reportModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="report-preview" id="reportContent">
+                    <!-- Report content will be rendered here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('reportModal')"> Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="downloadReportAsImage()">
+                    <span class="material-icons">image</span>
+                    Baixar como Imagem
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq5qmLy6HAzZAeC4KCVjLfdCM77ttOU3A",
+            authDomain: "csf-iac.firebaseapp.com",
+            projectId: "csf-iac",
+            storageBucket: "csf-iac.firebasestorage.app",
+            messagingSenderId: "484645494526",
+            appId: "1:484645494526:web:f5ecc23c7c0edbca320faf",
+            measurementId: "G-XL3WY01E73"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        let firebaseAvailable = false;
+
+        // State
+        let cursos = [];
+        let instrutores = [];
+        let usuarios = [];
+        let activityLogs = [];
+        let currentUser = null;
+        let editingCourseId = null;
+        let editingInstructorId = null;
+        let editingUserId = null;
+        let currentMonth = new Date();
+        let viewingCourseId = null;
+
+        const defaultUsers = [
+            { id: 'admin1', name: 'Administrador', username: 'Csfiac', password: '032147', role: 'admin' },
+            { id: 'editor1', name: 'Editor', username: 'Iac', password: 'Iac@123', role: 'editor' },
+            { id: 'viewer1', name: 'Visualizador', username: 'viewer', password: 'viewer123', role: 'viewer' }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeApp();
+            checkAuth();
+            setupEventListeners();
+            setupDragAndDrop(); // Chamada para configurar o drag and drop
+        });
+
+        async function initializeApp() {
+            try {
+                await db.collection('_test_connection').doc('test').get();
+                firebaseAvailable = true;
+                console.log('Firebase conectado com sucesso!');
+                await initializeUsers();
+            } catch (error) {
+                console.warn('Firebase não disponível, usando localStorage:', error.message);
+                firebaseAvailable = false;
+                initializeLocalStorage();
+            }
+        }
+
+        function initializeLocalStorage() {
+            if (!localStorage.getItem('usuarios')) {
+                localStorage.setItem('usuarios', JSON.stringify(defaultUsers));
+            }
+            if (!localStorage.getItem('cursos')) {
+                localStorage.setItem('cursos', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('instrutores')) {
+                localStorage.setItem('instrutores', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('activityLogs')) {
+                localStorage.setItem('activityLogs', JSON.stringify([]));
+            }
+        }
+
+        async function initializeUsers() {
+            try {
+                const snapshot = await db.collection('usuarios').get();
+                if (snapshot.empty) {
+                    for (const user of defaultUsers) {
+                        await db.collection('usuarios').doc(user.id).set(user);
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing users:', error);
+            }
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showApp();
+            }
+        }
+
+        // Auth Functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const defaultUser = defaultUsers.find(u => u.username === username && u.password === password);
+            
+            if (defaultUser) {
+                currentUser = { ...defaultUser };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('loginError').classList.remove('show');
+                showApp();
+                logActivity('Login', `${currentUser.name} fez login`, 'add');
+                return;
+            }
+            
+            if (!firebaseAvailable) {
+                const localUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                const localUser = localUsers.find(u => u.username === username && u.password === password);
+                
+                if (localUser) {
+                    currentUser = { ...localUser };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    document.getElementById('loginError').classList.remove('show');
+                    showApp();
+                    logActivity('Login', `${currentUser.name} fez login`, 'add');
+                    return;
+                }
+                
+                document.getElementById('loginError').classList.add('show');
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('usuarios').where('username', '==', username).get();
+                
+                if (!snapshot.empty) {
+                    const userDoc = snapshot.docs[0];
+                    const userData = userDoc.data();
+                    
+                    if (userData.password === password) {
+                        currentUser = { id: userDoc.id, ...userData };
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        document.getElementById('loginError').classList.remove('show');
+                        showApp();
+                        logActivity('Login', `${currentUser.name} fez login`, 'add');
+                        return;
+                    }
+                }
+                
+                document.getElementById('loginError').classList.add('show');
+            } catch (error) {
+                console.error('Erro no login Firebase:', error);
+                document.getElementById('loginError').classList.add('show');
+            }
+        }
+
+        function showApp() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+            
+            const roleLabels = { admin: 'Administrador', editor: 'Editor', viewer: 'Visualizador' };
+            document.getElementById('userRole').textContent = roleLabels[currentUser.role];
+            
+            if (document.getElementById('currentNameDisplay')) {
+                document.getElementById('currentNameDisplay').value = currentUser.name;
+            }
+            
+            if (currentUser.role === 'admin') {
+                document.getElementById('usersNavItem').style.display = 'flex';
+            } else {
+                document.getElementById('usersNavItem').style.display = 'none';
+            }
+
+            if (currentUser.role === 'viewer') {
+                document.getElementById('newCourseBtn').style.display = 'none';
+                document.getElementById('newInstructorBtn').style.display = 'none';
+            } else {
+                document.getElementById('newCourseBtn').style.display = 'flex';
+                document.getElementById('newInstructorBtn').style.display = 'flex';
+            }
+
+            loadData();
+        }
+
+        // Data Loading
+        function loadData() {
+            if (firebaseAvailable) {
+                db.collection('cursos').onSnapshot(snapshot => {
+                    cursos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderCourses();
+                    updateKPIs();
+                    renderCalendar();
+                }, error => {
+                    console.error('Erro ao carregar cursos:', error);
+                    loadFromLocalStorage();
+                });
+
+                db.collection('instrutores').onSnapshot(snapshot => {
+                    instrutores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderInstructors();
+                    updateInstructorSelect();
+                }, error => {
+                    console.error('Erro ao carregar instrutores:', error);
+                    loadFromLocalStorage();
+                });
+
+                db.collection('usuarios').onSnapshot(snapshot => {
+                    usuarios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderUsers();
+                    // Update current user name if it changed
+                    if (currentUser && currentUser.id) {
+                        const updatedUser = usuarios.find(u => u.id === currentUser.id);
+                        if (updatedUser && updatedUser.name !== currentUser.name) {
+                            currentUser = { ...currentUser, name: updatedUser.name };
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            document.getElementById('userName').textContent = currentUser.name;
+                            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+                        }
+                        if (updatedUser && updatedUser.role !== currentUser.role) {
+                             currentUser = { ...currentUser, role: updatedUser.role };
+                             localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                             const roleLabels = { admin: 'Administrador', editor: 'Editor', viewer: 'Visualizador' };
+                             document.getElementById('userRole').textContent = roleLabels[currentUser.role];
+                            if (currentUser.role === 'admin') {
+                                document.getElementById('usersNavItem').style.display = 'flex';
+                            } else {
+                                document.getElementById('usersNavItem').style.display = 'none';
+                            }
+                             if (currentUser.role === 'viewer') {
+                                document.getElementById('newCourseBtn').style.display = 'none';
+                                document.getElementById('newInstructorBtn').style.display = 'none';
+                            } else {
+                                document.getElementById('newCourseBtn').style.display = 'flex';
+                                document.getElementById('newInstructorBtn').style.display = 'flex';
+                            }
+                        }
+                    }
+                }, error => {
+                    console.error('Erro ao carregar usuários:', error);
+                    loadFromLocalStorage();
+                });
+
+                db.collection('activities').orderBy('timestamp', 'desc').limit(100).onSnapshot(snapshot => {
+                    activityLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderActivityLogs();
+                }, error => {
+                    console.error('Erro ao carregar logs:', error);
+                    loadFromLocalStorage();
+                });
+            } else {
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            cursos = JSON.parse(localStorage.getItem('cursos') || '[]');
+            instrutores = JSON.parse(localStorage.getItem('instrutores') || '[]');
+            usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            activityLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+            
+            renderCourses();
+            updateKPIs();
+            renderCalendar();
+            renderInstructors();
+            updateInstructorSelect();
+            renderUsers();
+            renderActivityLogs();
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            document.getElementById(`${page}Page`).classList.add('active');
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Render Functions
+        function renderCourses(searchTerm = '') {
+            const grid = document.getElementById('coursesGrid');
+            let filtered = cursos;
+
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filtered = cursos.filter(c => 
+                    c.curso?.toLowerCase().includes(term) ||
+                    c.cidade?.toLowerCase().includes(term) ||
+                    c.instrutor?.toLowerCase().includes(term) ||
+                    c.loteResponsavel?.toLowerCase().includes(term)
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <span class="material-icons">school</span>
+                        <h3>Nenhum curso encontrado</h3>
+                        <p>${searchTerm ? 'Tente uma busca diferente' : 'Adicione seu primeiro curso'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(course => {
+                const statusClass = getStatusClass(course.status);
+                const canEdit = currentUser?.role !== 'viewer';
+                
+                return `
+                    <div class="course-card" onclick="openViewCourseModal('${course.id}')">
+                        <div class="course-header">
+                            <div>
+                                <div class="course-title">${course.curso || 'Sem nome'}</div>
+                                <div class="course-id">ID da Turma: ${course.idLote || 'N/A'}${course.loteResponsavel ? ' | ' + course.loteResponsavel : ''}</div>
+                            </div>
+                            ${canEdit ? `
+                                <div class="course-actions" onclick="event.stopPropagation()">
+                                    ${course.driveLink ? `
+                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Abrir Google Drive">
+                                            <span class="material-icons">folder</span>
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="openCourseModal('${course.id}')" title="Editar">
+                                        <span class="material-icons">edit</span>
+                                    </button>
+                                    <button class="delete" onclick="deleteCourse('${course.id}')" title="Excluir">
+                                        <span class="material-icons">delete</span>
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="course-actions" onclick="event.stopPropagation()">
+                                    ${course.driveLink ? `
+                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Abrir Google Drive">
+                                            <span class="material-icons">folder</span>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `}
+                        </div>
+                        <div class="course-info">
+                            <div class="course-info-item">
+                                <span class="material-icons">location_on</span>
+                                ${course.cidade || 'Local não definido'}${course.local ? ' - ' + course.local : ''}
+                            </div>
+                            <div class="course-info-item">
+                                <span class="material-icons">event</span>
+                                ${formatDate(course.inicio)} - ${formatDate(course.fim)}
+                            </div>
+                            <div class="course-info-item">
+                                <span class="material-icons">person</span>
+                                ${course.instrutor || 'Instrutor não definido'}
+                            </div>
+                            <div class="course-info-item">
+                                <span class="material-icons">groups</span>
+                                ${course.alunos || 0} concludentes
+                            </div>
+                            <div>
+                                <span class="status-badge ${statusClass}">${course.status || 'Pendente'}</span>
+                            </div>
+                        </div>
+                        <!-- Exibição da anotação no card -->
+                        ${course.nota ? `
+                            <div class="course-note">
+                                <span class="material-icons">sticky_note_2</span>
+                                <span class="course-note-text">${course.nota}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openDriveLink(link) {
+            if (link) {
+                window.open(link, '_blank');
+            }
+        }
+
+        function openViewCourseModal(courseId) {
+            viewingCourseId = courseId;
+            const course = cursos.find(c => c.id === courseId);
+            if (!course) return;
+
+            document.getElementById('viewCourseTitle').textContent = course.curso || 'Detalhes do Curso';
+            
+            const statusClass = getStatusClass(course.status);
+            
+            const body = document.getElementById('viewCourseBody');
+            body.innerHTML = `
+                <div class="course-detail-item">
+                    <span class="material-icons">school</span>
+                    <div>
+                        <div class="course-detail-label">Nome do Curso</div>
+                        <div class="course-detail-value">${course.curso || 'Não informado'}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">tag</span>
+                    <div>
+                        <div class="course-detail-label">ID da Turma / Lote</div>
+                        <div class="course-detail-value">${course.idLote || 'N/A'} ${course.loteResponsavel ? '- ' + course.loteResponsavel : ''}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">hourglass_bottom</span>
+                    <div>
+                        <div class="course-detail-label">Carga Horária</div>
+                        <div class="course-detail-value">${course.cargaHoraria || 'Não informada'}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">location_on</span>
+                    <div>
+                        <div class="course-detail-label">Cidade / Local</div>
+                        <div class="course-detail-value">${course.cidade || 'Não informado'}${course.local ? ' - ' + course.local : ''}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">event</span>
+                    <div>
+                        <div class="course-detail-label">Período</div>
+                        <div class="course-detail-value">${formatDate(course.inicio)} até ${formatDate(course.fim)}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">person</span>
+                    <div>
+                        <div class="course-detail-label">Instrutor</div>
+                        <div class="course-detail-value">${course.instrutor || 'Não definido'}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">groups</span>
+                    <div>
+                        <div class="course-detail-label">Concludentes</div>
+                        <div class="course-detail-value">${course.alunos || 0}</div>
+                    </div>
+                </div>
+                <div class="course-detail-item">
+                    <span class="material-icons">info</span>
+                    <div>
+                        <div class="course-detail-label">Status</div>
+                        <div class="course-detail-value"><span class="status-badge ${statusClass}">${course.status || 'Pendente'}</span></div>
+                    </div>
+                </div>
+                ${course.driveLink ? `
+                <div class="course-detail-item">
+                    <span class="material-icons">folder</span>
+                    <div>
+                        <div class="course-detail-label">Google Drive</div>
+                        <div class="course-detail-value">
+                            <a href="${course.driveLink}" target="_blank">
+                                <span class="material-icons" style="font-size: 18px;">open_in_new</span>
+                                Abrir pasta do curso
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                 ${course.nota ? `
+                <div class="course-detail-item">
+                    <span class="material-icons">chat_bubble_outline</span>
+                    <div>
+                        <div class="course-detail-label">Observação</div>
+                        <div class="course-detail-value">${course.nota}</div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            const editBtn = document.getElementById('editCourseFromViewBtn');
+            if (currentUser?.role !== 'viewer') {
+                editBtn.style.display = 'flex';
+                editBtn.onclick = () => {
+                    closeModal('viewCourseModal');
+                    openCourseModal(courseId);
+                };
+            } else {
+                editBtn.style.display = 'none';
+            }
+
+            document.getElementById('viewCourseModal').classList.add('active');
+        }
+
+        function renderInstructors() {
+            const grid = document.getElementById('instructorGrid');
+
+            if (instrutores.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <span class="material-icons">people</span>
+                        <h3>Nenhum instrutor cadastrado</h3>
+                        <p>Adicione seu primeiro instrutor</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = instrutores.map(instructor => {
+                const coursesCount = cursos.filter(c => c.instrutor === instructor.nome).length;
+                const canEdit = currentUser?.role !== 'viewer';
+                const phone = instructor.telefone ? instructor.telefone.replace(/\D/g, '') : '';
+
+                return `
+                    <div class="instructor-card">
+                        <div class="instructor-avatar">${instructor.nome?.charAt(0) || '?'}</div>
+                        <div class="instructor-name">${instructor.nome || 'Sem nome'}</div>
+                        <div class="instructor-specialty">${instructor.especialidade || 'Sem especialidade'}</div>
+                        <div class="instructor-stats">
+                            <div class="instructor-stat">
+                                <div class="instructor-stat-value">${coursesCount}</div>
+                                <div class="instructor-stat-label">Cursos</div>
+                            </div>
+                        </div>
+                        <div class="instructor-actions">
+                            ${phone ? `
+                                <button class="btn btn-whatsapp btn-icon" onclick="openWhatsApp('${phone}')" title="Enviar mensagem no WhatsApp">
+                                    <span class="material-icons">chat</span>
+                                </button>
+                            ` : ''}
+                            ${canEdit ? `
+                                <button class="btn btn-secondary btn-icon" onclick="openInstructorModal('${instructor.id}')" title="Editar">
+                                    <span class="material-icons">edit</span>
+                                </button>
+                                <button class="btn btn-danger btn-icon" onclick="deleteInstructor('${instructor.id}')" title="Excluir">
+                                    <span class="material-icons">delete</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openWhatsApp(phone) {
+            const formattedPhone = phone.startsWith('55') ? phone : '55' + phone;
+            window.open(`https://wa.me/${formattedPhone}`, '_blank');
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            tbody.innerHTML = usuarios.map(user => {
+                const roleClass = user.role;
+                const roleLabel = { admin: 'Admin', editor: 'Editor', viewer: 'Viewer' }[user.role];
+                const isCurrentUser = user.id === currentUser?.id;
+
+                return `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td>${user.email || user.username || '-'}</td>
+                        <td><span class="role-badge ${roleClass}">${roleLabel}</span></td>
+                        <td>
+                            ${!isCurrentUser ? `
+                                <button class="btn btn-secondary btn-icon" onclick="openUserModal('${user.id}')" title="Editar">
+                                    <span class="material-icons">edit</span>
+                                </button>
+                                <button class="btn btn-danger btn-icon" onclick="deleteUser('${user.id}')" title="Excluir">
+                                    <span class="material-icons">delete</span>
+                                </button>
+                            ` : '<span style="color: var(--text-muted)">Usuário atual</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderActivityLogs() {
+            const container = document.getElementById('activityLog');
+            
+            if (activityLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">history</span>
+                        <h3>Nenhuma atividade registrada</h3>
+                        <p>As atividades aparecerão aqui</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="activity-log-grid">
+                    ${activityLogs.map(log => {
+                        const iconClass = log.type || 'add';
+                        const iconName = iconClass === 'add' ? 'add' : iconClass === 'edit' ? 'edit' : 'delete';
+                        return `
+                            <div class="activity-item">
+                                <div class="activity-icon ${iconClass}">
+                                    <span class="material-icons">${iconName}</span>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-header">
+                                        <div class="activity-title">${log.action}</div>
+                                        <div class="activity-time">${formatTimestamp(log.timestamp)}</div>
+                                    </div>
+                                    <div class="activity-description">${log.description}</div>
+                                    <div class="activity-user">
+                                        <span class="material-icons">person</span>
+                                        ${log.user || 'Sistema'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function updateKPIs() {
+            document.getElementById('totalCourses').textContent = cursos.length;
+            document.getElementById('completedCourses').textContent = cursos.filter(c => c.status === 'Concluído').length;
+            document.getElementById('ongoingCourses').textContent = cursos.filter(c => c.status === 'Em Andamento').length;
+            document.getElementById('totalStudents').textContent = cursos.reduce((sum, c) => sum + (parseInt(c.alunos) || 0), 0);
+        }
+
+        function updateInstructorSelect() {
+            const select = document.getElementById('courseInstructor');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">Selecione um instrutor</option>' +
+                instrutores.map(i => `<option value="${i.nome}">${i.nome}</option>`).join('');
+            
+            select.value = currentValue;
+        }
+
+        // Calendar Functions
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('calendarTitle').textContent = `${months[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let html = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+                .map(day => `<div class="calendar-day-header">${day}</div>`)
+                .join('');
+
+            const prevMonth = new Date(year, month, 0);
+            for (let i = startDay - 1; i >= 0; i--) {
+                html += `<div class="calendar-day other-month"><div class="calendar-date">${prevMonth.getDate() - i}</div></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const isToday = date.getTime() === today.getTime();
+                const dateStr = date.toISOString().split('T')[0];
+
+                const events = cursos.filter(c => {
+                    if (!c.inicio || !c.fim) return false;
+                    return c.inicio === dateStr || c.fim === dateStr || 
+                           (c.inicio < dateStr && c.fim > dateStr);
+                });
+
+                let eventsHtml = events.slice(0, 3).map(c => {
+                    let eventClass = 'ongoing';
+                    if (c.inicio === dateStr) eventClass = 'start';
+                    else if (c.fim === dateStr) eventClass = 'end';
+                    return `<div class="calendar-event ${eventClass}" title="${c.curso}">${c.curso}</div>`;
+                }).join('');
+
+                if (events.length > 3) {
+                    eventsHtml += `<div class="calendar-event" style="background: var(--text-muted);">+${events.length - 3} mais</div>`;
+                }
+
+                html += `
+                    <div class="calendar-day${isToday ? ' today' : ''}">
+                        <div class="calendar-date">${day}</div>
+                        ${eventsHtml}
+                    </div>
+                `;
+            }
+
+            const totalCells = startDay + daysInMonth;
+            const remainingCells = 7 - (totalCells % 7);
+            if (remainingCells < 7) {
+                for (let i = 1; i <= remainingCells; i++) {
+                    html += `<div class="calendar-day other-month"><div class="calendar-date">${i}</div></div>`;
+                }
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentMonth = new Date();
+            renderCalendar();
+        }
+
+        // Modal Functions
+        function openCourseModal(courseId = null) {
+            editingCourseId = courseId;
+            const modal = document.getElementById('courseModal');
+            const title = document.getElementById('courseModalTitle');
+            const form = document.getElementById('courseForm');
+
+            form.reset();
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+
+            if (courseId) {
+                const course = cursos.find(c => c.id === courseId);
+                if (course) {
+                    title.textContent = 'Editar Curso';
+                    document.getElementById('courseName').value = course.curso || '';
+                    document.getElementById('courseIdLote').value = course.idLote || '';
+                    document.getElementById('courseLoteResponsavel').value = course.loteResponsavel || '';
+                    document.getElementById('courseCargaHoraria').value = course.cargaHoraria || '';
+                    document.getElementById('courseCity').value = course.cidade || '';
+                    document.getElementById('courseLocation').value = course.local || '';
+                    document.getElementById('courseStart').value = course.inicio || '';
+                    document.getElementById('courseEnd').value = course.fim || '';
+                    document.getElementById('courseStatus').value = course.status || 'Pendente';
+                    document.getElementById('courseStudents').value = course.alunos || 0;
+                    document.getElementById('courseInstructor').value = course.instrutor || '';
+                    document.getElementById('courseDriveLink').value = course.driveLink || '';
+                    document.getElementById('courseNote').value = course.nota || '';
+                }
+            } else {
+                title.textContent = 'Novo Curso';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function openInstructorModal(instructorId = null) {
+            editingInstructorId = instructorId;
+            const modal = document.getElementById('instructorModal');
+            const title = document.getElementById('instructorModalTitle');
+            const form = document.getElementById('instructorForm');
+
+            form.reset();
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+
+            if (instructorId) {
+                const instructor = instrutores.find(i => i.id === instructorId);
+                if (instructor) {
+                    title.textContent = 'Editar Instrutor';
+                    document.getElementById('instructorName').value = instructor.nome || '';
+                    document.getElementById('instructorSpecialty').value = instructor.especialidade || '';
+                    document.getElementById('instructorPhone').value = instructor.telefone || '';
+                    document.getElementById('instructorEmail').value = instructor.email || '';
+                }
+            } else {
+                title.textContent = 'Novo Instrutor';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function openQuickInstructorModal() {
+            document.getElementById('quickInstructorForm').reset();
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+            document.getElementById('quickInstructorModal').classList.add('active');
+        }
+
+        function openUserModal(userId = null) {
+            editingUserId = userId;
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('userModalTitle');
+            const form = document.getElementById('userForm');
+
+            form.reset();
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+
+            if (userId) {
+                const user = usuarios.find(u => u.id === userId);
+                if (user) {
+                    title.textContent = 'Editar Usuário';
+                    document.getElementById('newUserName').value = user.name || '';
+                    document.getElementById('newUserUsername').value = user.username || '';
+                    document.getElementById('newUserEmail').value = user.email || '';
+                    document.getElementById('newUserPassword').value = '';
+                    document.getElementById('newUserRole').value = user.role || 'viewer';
+                }
+            } else {
+                title.textContent = 'Novo Usuário';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            const form = document.getElementById(`${modalId.replace('Modal', 'Form')}`);
+            if (form) {
+                form.reset();
+            }
+            document.querySelectorAll(`#${modalId} .form-error`).forEach(el => el.classList.remove('show'));
+        }
+
+        async function handleCourseSubmit(e) {
+            e.preventDefault();
+            
+            const courseData = {
+                curso: document.getElementById('courseName').value.trim(),
+                idLote: parseInt(document.getElementById('courseIdLote').value) || 0,
+                loteResponsavel: document.getElementById('courseLoteResponsavel').value.trim(),
+                cargaHoraria: document.getElementById('courseCargaHoraria').value,
+                cidade: document.getElementById('courseCity').value.trim(),
+                inicio: document.getElementById('courseStart').value,
+                fim: document.getElementById('courseEnd').value,
+                status: document.getElementById('courseStatus').value || 'Pendente',
+                alunos: parseInt(document.getElementById('courseStudents').value) || 0,
+                local: document.getElementById('courseLocation').value.trim(),
+                instrutor: document.getElementById('courseInstructor').value,
+                driveLink: document.getElementById('courseDriveLink').value.trim(),
+                nota: document.getElementById('courseNote').value.trim() // Salva a anotação
+            };
+
+            try {
+                if (firebaseAvailable) {
+                    if (editingCourseId) {
+                        await db.collection('cursos').doc(editingCourseId).update(courseData);
+                    } else {
+                        await db.collection('cursos').add(courseData);
+                    }
+                } else {
+                    const existingCourses = JSON.parse(localStorage.getItem('cursos') || '[]');
+                    if (editingCourseId) {
+                        const index = existingCourses.findIndex(c => c.id === editingCourseId);
+                        if (index !== -1) {
+                            existingCourses[index] = { ...existingCourses[index], ...courseData };
+                        }
+                    } else {
+                        courseData.id = 'course_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        existingCourses.push(courseData);
+                    }
+                    localStorage.setItem('cursos', JSON.stringify(existingCourses));
+                    loadFromLocalStorage();
+                }
+                
+                if (editingCourseId) {
+                    showToast('Curso atualizado com sucesso!', 'success');
+                    logActivity('Edição de Curso', `Editou o curso "${courseData.curso || 'Sem nome'}"`, 'edit');
+                } else {
+                    showToast('Curso criado com sucesso!', 'success');
+                    logActivity('Novo Curso', `Adicionou o curso "${courseData.curso || 'Sem nome'}"`, 'add');
+                }
+                closeModal('courseModal');
+            } catch (error) {
+                console.error('Error saving course:', error);
+                showToast('Erro ao salvar curso', 'error');
+            }
+        }
+
+        async function handleInstructorSubmit(e) {
+            e.preventDefault();
+            
+            const instructorData = {
+                nome: document.getElementById('instructorName').value.trim(),
+                especialidade: document.getElementById('instructorSpecialty').value.trim(),
+                telefone: document.getElementById('instructorPhone').value.trim(),
+                email: document.getElementById('instructorEmail').value.trim()
+            };
+
+            try {
+                if (firebaseAvailable) {
+                    if (editingInstructorId) {
+                        await db.collection('instrutores').doc(editingInstructorId).update(instructorData);
+                    } else {
+                        await db.collection('instrutores').add(instructorData);
+                    }
+                } else {
+                    const existingInstructors = JSON.parse(localStorage.getItem('instrutores') || '[]');
+                    if (editingInstructorId) {
+                        const index = existingInstructors.findIndex(i => i.id === editingInstructorId);
+                        if (index !== -1) {
+                            existingInstructors[index] = { ...existingInstructors[index], ...instructorData };
+                        }
+                    } else {
+                        instructorData.id = 'instructor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        existingInstructors.push(instructorData);
+                    }
+                    localStorage.setItem('instrutores', JSON.stringify(existingInstructors));
+                    loadFromLocalStorage();
+                }
+                
+                if (editingInstructorId) {
+                    showToast('Instrutor atualizado com sucesso!', 'success');
+                    logActivity('Edição de Instrutor', `Editou o instrutor "${instructorData.nome || 'Sem nome'}"`, 'edit');
+                } else {
+                    showToast('Instrutor criado com sucesso!', 'success');
+                    logActivity('Novo Instrutor', `Adicionou o instrutor "${instructorData.nome || 'Sem nome'}"`, 'add');
+                }
+                closeModal('instructorModal');
+            } catch (error) {
+                console.error('Error saving instructor:', error);
+                showToast('Erro ao salvar instrutor', 'error');
+            }
+        }
+
+        async function handleQuickInstructorSubmit(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('quickInstructorName').value.trim();
+
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('instrutores').add({ nome: nome || 'Novo Instrutor' });
+                } else {
+                    const existingInstructors = JSON.parse(localStorage.getItem('instrutores') || '[]');
+                    existingInstructors.push({
+                        id: 'instructor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                        nome: nome || 'Novo Instrutor'
+                    });
+                    localStorage.setItem('instrutores', JSON.stringify(existingInstructors));
+                    loadFromLocalStorage();
+                }
+                showToast('Instrutor adicionado!', 'success');
+                logActivity('Novo Instrutor', `Adicionou o instrutor "${nome || 'Novo Instrutor'}" (rápido)`, 'add');
+                closeModal('quickInstructorModal');
+            } catch (error) {
+                console.error('Error adding instructor:', error);
+                showToast('Erro ao adicionar instrutor', 'error');
+            }
+        }
+
+        async function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            const userData = {
+                name: document.getElementById('newUserName').value.trim() || 'Novo Usuário',
+                username: document.getElementById('newUserUsername').value.trim() || 'user_' + Date.now(),
+                email: document.getElementById('newUserEmail').value.trim(),
+                password: document.getElementById('newUserPassword').value,
+                role: document.getElementById('newUserRole').value || 'viewer'
+            };
+
+            try {
+                if (firebaseAvailable) {
+                    if (editingUserId) {
+                        // Se não foi informada nova senha, manter a antiga
+                        if (!userData.password) {
+                            const existingUser = usuarios.find(u => u.id === editingUserId);
+                            if (existingUser) {
+                                userData.password = existingUser.password;
+                            }
+                        }
+                        await db.collection('usuarios').doc(editingUserId).update(userData);
+                    } else {
+                        // Novo usuário - senha padrão se não informada
+                        if (!userData.password) {
+                            userData.password = '123456';
+                        }
+                        await db.collection('usuarios').add(userData);
+                    }
+                } else {
+                    const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    if (editingUserId) {
+                        const index = existingUsers.findIndex(u => u.id === editingUserId);
+                        if (index !== -1) {
+                            // Se não foi informada nova senha, manter a antiga
+                            if (!userData.password) {
+                                userData.password = existingUsers[index].password;
+                            }
+                            existingUsers[index] = { ...existingUsers[index], ...userData };
+                        }
+                    } else {
+                        // Novo usuário - senha padrão se não informada
+                        if (!userData.password) {
+                            userData.password = '123456';
+                        }
+                        userData.id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        existingUsers.push(userData);
+                    }
+                    localStorage.setItem('usuarios', JSON.stringify(existingUsers));
+                    loadFromLocalStorage();
+                }
+                
+                if (editingUserId) {
+                    showToast('Usuário atualizado com sucesso!', 'success');
+                    logActivity('Edição de Usuário', `Editou o usuário "${userData.name}"`, 'edit');
+                } else {
+                    showToast('Usuário criado com sucesso!', 'success');
+                    logActivity('Novo Usuário', `Adicionou o usuário "${userData.name}"`, 'add');
+                }
+                closeModal('userModal');
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showToast('Erro ao salvar usuário', 'error');
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('As senhas não coincidem', 'error');
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                showToast('A nova senha deve ter pelo menos 4 caracteres', 'error');
+                return;
+            }
+
+            // Verificar senha atual
+            if (currentUser.password !== currentPassword) {
+                showToast('Senha atual incorreta', 'error');
+                return;
+            }
+
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('usuarios').doc(currentUser.id).update({ password: newPassword });
+                } else {
+                    const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    const index = existingUsers.findIndex(u => u.id === currentUser.id);
+                    if (index !== -1) {
+                        existingUsers[index].password = newPassword;
+                        localStorage.setItem('usuarios', JSON.stringify(existingUsers));
+                    }
+                }
+
+                // Atualizar o usuário atual
+                currentUser.password = newPassword;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                showToast('Senha alterada com sucesso!', 'success');
+                logActivity('Alteração de Senha', `${currentUser.name} alterou sua senha`, 'edit');
+                
+                // Limpar formulário
+                document.getElementById('changePasswordForm').reset();
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showToast('Erro ao alterar senha', 'error');
+            }
+        }
+
+        async function handleChangeName(e) {
+            e.preventDefault();
+            
+            const newName = document.getElementById('newAdminName').value.trim();
+            const currentNameDisplay = document.getElementById('currentNameDisplay');
+
+            if (!newName) {
+                showToast('Digite um novo nome', 'error');
+                return;
+            }
+
+            if (newName.length < 2) {
+                showToast('O nome deve ter pelo menos 2 caracteres', 'error');
+                return;
+            }
+
+            const oldName = currentUser.name;
+
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('usuarios').doc(currentUser.id).update({ name: newName });
+                } else {
+                    const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    const index = existingUsers.findIndex(u => u.id === currentUser.id);
+                    if (index !== -1) {
+                        existingUsers[index].name = newName;
+                        localStorage.setItem('usuarios', JSON.stringify(existingUsers));
+                    }
+                }
+
+                // Atualizar o usuário atual
+                currentUser.name = newName;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Atualizar a sidebar
+                document.getElementById('userName').textContent = newName;
+                document.getElementById('userAvatar').textContent = newName.charAt(0).toUpperCase();
+                
+                // Atualizar o campo de nome atual
+                currentNameDisplay.value = newName;
+
+                showToast('Nome alterado com sucesso!', 'success');
+                logActivity('Alteração de Nome', `${oldName} alterou seu nome para "${newName}"`, 'edit');
+                
+                // Limpar formulário
+                document.getElementById('newAdminName').value = '';
+            } catch (error) {
+                console.error('Error changing name:', error);
+                showToast('Erro ao alterar nome', 'error');
+            }
+        }
+
+
+        async function deleteCourse(id) {
+            if (!confirm('Tem certeza que deseja excluir este curso?')) return;
+
+            try {
+                const course = cursos.find(c => c.id === id);
+                
+                if (firebaseAvailable) {
+                    await db.collection('cursos').doc(id).delete();
+                } else {
+                    const existingCourses = JSON.parse(localStorage.getItem('cursos') || '[]');
+                    const filteredCourses = existingCourses.filter(c => c.id !== id);
+                    localStorage.setItem('cursos', JSON.stringify(filteredCourses));
+                    loadFromLocalStorage();
+                }
+                
+                showToast('Curso excluído!', 'success');
+                logActivity('Exclusão de Curso', `Excluiu o curso "${course?.curso}"`, 'delete');
+            } catch (error) {
+                console.error('Error deleting course:', error);
+                showToast('Erro ao excluir curso', 'error');
+            }
+        }
+
+        async function deleteInstructor(id) {
+            if (!confirm('Tem certeza que deseja excluir este instrutor?')) return;
+
+            try {
+                const instructor = instrutores.find(i => i.id === id);
+                
+                if (firebaseAvailable) {
+                    await db.collection('instrutores').doc(id).delete();
+                } else {
+                    const existingInstructors = JSON.parse(localStorage.getItem('instrutores') || '[]');
+                    const filteredInstructors = existingInstructors.filter(i => i.id !== id);
+                    localStorage.setItem('instrutores', JSON.stringify(filteredInstructors));
+                    loadFromLocalStorage();
+                }
+                
+                showToast('Instrutor excluído!', 'success');
+                logActivity('Exclusão de Instrutor', `Excluiu o instrutor "${instructor?.nome}"`, 'delete');
+            } catch (error) {
+                console.error('Error deleting instructor:', error);
+                showToast('Erro ao excluir instrutor', 'error');
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+
+            try {
+                const user = usuarios.find(u => u.id === id);
+                
+                if (firebaseAvailable) {
+                    await db.collection('usuarios').doc(id).delete();
+                } else {
+                    const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    const filteredUsers = existingUsers.filter(u => u.id !== id);
+                    localStorage.setItem('usuarios', JSON.stringify(filteredUsers));
+                    loadFromLocalStorage();
+                }
+                
+                showToast('Usuário excluído!', 'success');
+                logActivity('Exclusão de Usuário', `Excluiu o usuário "${user?.name}"`, 'delete');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('Erro ao excluir usuário', 'error');
+            }
+        }
+
+        // Import/Export Functions
+        async function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('fileInfoBox').style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    let imported = 0;
+                    for (const row of json) {
+                        const courseData = {
+                            curso: row['CURSO'] || row['curso'] || '',
+                            idLote: parseInt(row['ID'] || row['id'] || 0),
+                            loteResponsavel: row['LOTE-RESPONSÁVEL'] || row['lote-responsavel'] || row['LOTE'] || '',
+                            cargaHoraria: row['CARGA HORÁRIA'] || row['carga horária'] || '', // Adicionado Carga Horária
+                            cidade: row['CIDADE/MUNICÍPIO'] || row['cidade'] || row['CIDADE'] || '',
+                            inicio: formatExcelDate(row['INÍCIO'] || row['inicio'] || row['INICIO']),
+                            fim: formatExcelDate(row['FIM'] || row['fim']),
+                            alunos: parseInt(row['CONCLUDENTES'] || row['concludentes'] || 0),
+                            local: row['LOCAL DO CURSO'] || row['local'] || '',
+                            instrutor: row['INSTRUTOR'] || row['instrutor'] || '',
+                            status: row['STATUS'] || row['status'] || 'Pendente',
+                            driveLink: row['DRIVE'] || row['drive'] || row['GOOGLE DRIVE'] || '',
+                            nota: row['OBSERVAÇÃO'] || row['observação'] || '' // Adicionado campo nota
+                        };
+
+                        if (firebaseAvailable) {
+                            await db.collection('cursos').add(courseData);
+                        } else {
+                            const existingCourses = JSON.parse(localStorage.getItem('cursos') || '[]');
+                            existingCourses.push({...courseData, id: 'course_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)});
+                            localStorage.setItem('cursos', JSON.stringify(existingCourses));
+                        }
+                        imported++;
+                    }
+
+                    showToast(`${imported} cursos importados com sucesso!`, 'success');
+                    logActivity('Importação', `Importou ${imported} cursos de planilha`, 'add');
+                    loadData();
+                } catch (error) {
+                    console.error('Error importing:', error);
+                    showToast('Erro ao importar arquivo', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function formatExcelDate(value) {
+            if (!value) return '';
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                return date.toISOString().split('T')[0];
+            }
+            if (typeof value === 'string') {
+                const parts = value.split(/[-\/]/);
+                if (parts.length === 3) {
+                    let day, month, year;
+                    if (parts[0].length === 4) {
+                        year = parts[0]; month = parts[1]; day = parts[2];
+                    } else {
+                        day = parts[0]; month = parts[1]; year = parts[2];
+                    }
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+            }
+            try {
+                const date = new Date(value);
+                if (!isNaN(date)) {
+                    return date.toISOString().split('T')[0];
+                }
+            } catch (e) { /* ignore */ }
+            return value;
+        }
+
+        function exportCoursesToCsv() {
+            const headers = ['CURSO', 'ID', 'LOTE-RESPONSÁVEL', 'CARGA HORÁRIA', 'CIDADE/MUNICÍPIO', 'INÍCIO', 'FIM', 'CONCLUDENTES', 'LOCAL DO CURSO', 'INSTRUTOR', 'STATUS', 'GOOGLE DRIVE', 'OBSERVAÇÃO'];
+            const rows = cursos.map(c => [
+                c.curso || '',
+                c.idLote || '',
+                c.loteResponsavel || '',
+                c.cargaHoraria || '', // Adicionado Carga Horária
+                c.cidade || '',
+                c.inicio || '',
+                c.fim || '',
+                c.alunos || 0,
+                c.local || '',
+                c.instrutor || '',
+                c.status || '',
+                c.driveLink || '',
+                c.nota || '' // Adicionado nota
+            ]);
+
+            downloadCsv([headers, ...rows], 'cursos.csv');
+            showToast('Cursos exportados!', 'success');
+        }
+
+        function exportInstructorsToCsv() {
+            const headers = ['NOME', 'ESPECIALIDADE', 'TELEFONE', 'EMAIL'];
+            const rows = instrutores.map(i => [
+                i.nome || '',
+                i.especialidade || '',
+                i.telefone || '',
+                i.email || ''
+            ]);
+
+            downloadCsv([headers, ...rows], 'instrutores.csv');
+            showToast('Instrutores exportados!', 'success');
+        }
+
+        function downloadCsv(data, filename) {
+            const csv = data.map(row => 
+                row.map(cell => {
+                    const escapedCell = String(cell).replace(/"/g, '""');
+                    return `"${escapedCell}"`;
+                }).join(',')
+            ).join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        async function clearAllData() {
+            if (!confirm('ATENÇÃO: Esta ação irá excluir TODOS os cursos e instrutores. Deseja continuar?')) return;
+            if (!confirm('Tem certeza absoluta? Esta ação não pode ser desfeita!')) return;
+
+            try {
+                if (firebaseAvailable) {
+                    const coursesSnapshot = await db.collection('cursos').get();
+                    const instructorsSnapshot = await db.collection('instrutores').get();
+
+                    const batch = db.batch();
+                    coursesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    instructorsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                } else {
+                    localStorage.setItem('cursos', JSON.stringify([]));
+                    localStorage.setItem('instrutores', JSON.stringify([]));
+                }
+
+                showToast('Todos os dados foram excluídos!', 'success');
+                logActivity('Limpeza de Dados', 'Excluiu todos os cursos e instrutores', 'delete');
+                loadData();
+            } catch (error) {
+                console.error('Error clearing data:', error);
+                showToast('Erro ao limpar dados', 'error');
+            }
+        }
+
+        function openReportModal() {
+            generateReport();
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function generateReport() {
+            const total = cursos.length;
+            const concluidos = cursos.filter(c => c.status === 'Concluído').length;
+            const andamento = cursos.filter(c => c.status === 'Em Andamento').length;
+            const pendentes = cursos.filter(c => c.status === 'Pendente').length;
+            const cancelados = cursos.filter(c => c.status === 'Cancelado').length;
+            const totalAlunos = cursos.reduce((sum, c) => sum + (parseInt(c.alunos) || 0), 0);
+
+            const today = new Date();
+            const reportDate = today.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+            // Cursos por cidade
+            const cursosporCidade = {};
+            cursos.forEach(c => {
+                const cidade = c.cidade || 'Não definido';
+                cursosporCidade[cidade] = (cursosporCidade[cidade] || 0) + 1;
+            });
+
+            document.getElementById('reportContent').innerHTML = `
+                <div class="report-header">
+                    <h2>
+                        <span class="material-icons" style="color: var(--primary);">assessment</span>
+                        CSF Manager - Relatório de Cursos
+                    </h2>
+                    <p>${reportDate}</p>
+                </div>
+
+                <div class="report-kpi-grid">
+                    <div class="report-kpi-card purple">
+                        <div class="report-kpi-value">${total}</div>
+                        <div class="report-kpi-label">Total de Cursos</div>
+                    </div>
+                    <div class="report-kpi-card green">
+                        <div class="report-kpi-value">${concluidos}</div>
+                        <div class="report-kpi-label">Concluídos</div>
+                    </div>
+                    <div class="report-kpi-card blue">
+                        <div class="report-kpi-value">${andamento}</div>
+                        <div class="report-kpi-label">Em Andamento</div>
+                    </div>
+                    <div class="report-kpi-card yellow">
+                        <div class="report-kpi-value">${pendentes}</div>
+                        <div class="report-kpi-label">Pendentes</div>
+                    </div>
+                    <div class="report-kpi-card red">
+                        <div class="report-kpi-value">${cancelados}</div>
+                        <div class="report-kpi-label">Cancelados</div>
+                    </div>
+                    <div class="report-kpi-card">
+                        <div class="report-kpi-value">${totalAlunos}</div>
+                        <div class="report-kpi-label">Concludentes</div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>
+                        <span class="material-icons">pie_chart</span>
+                        Distribuição por Status
+                    </h3>
+                    <div class="report-chart">
+                        <canvas id="statusChart" width="280" height="280"></canvas>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>
+                        <span class="material-icons">location_city</span>
+                        Cursos por Cidade
+                    </h3>
+                    <div class="report-city-grid">
+                        ${Object.entries(cursosporCidade).map(([cidade, qtd]) => `
+                            <div class="report-city-item">
+                                <span class="report-city-name">${cidade}</span>
+                                <span class="report-city-count">${qtd}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>
+                        <span class="material-icons">list</span>
+                        Lista de Cursos ${cursos.length > 15 ? '(Primeiros 15)' : ''}
+                    </h3>
+                    <table class="report-table">
+                        <tr>
+                            <th>Curso</th>
+                            <th>Cidade</th>
+                            <th>Período</th>
+                            <th>Status</th>
+                        </tr>
+                        ${cursos.slice(0, 15).map(c => `
+                            <tr>
+                                <td>${c.curso || 'N/A'}</td>
+                                <td>${c.cidade || 'N/A'}</td>
+                                <td>${formatDate(c.inicio)} - ${formatDate(c.fim)}</td>
+                                <td>${c.status || 'Pendente'}</td>
+                            </tr>
+                        `).join('')}
+                        ${cursos.length > 15 ? `<tr><td colspan="4" style="text-align: center; opacity: 0.7;">... e mais ${cursos.length - 15} cursos</td></tr>` : ''}
+                    </table>
+                </div>
+            `;
+
+            setTimeout(() => {
+                const ctx = document.getElementById('statusChart')?.getContext('2d');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Concluídos', 'Em Andamento', 'Pendentes', 'Cancelados'],
+                            datasets: [{
+                                data: [concluidos, andamento, pendentes, cancelados],
+                                backgroundColor: ['#34d399', '#60a5fa', '#fbbf24', '#f87171'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            cutout: '60%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#ffffff',
+                                        padding: 15,
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        async function downloadReportAsImage() {
+            const element = document.getElementById('reportContent');
+            try {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#1a1a2e',
+                    scale: 2
+                });
+                const link = document.createElement('a');
+                link.download = `relatorio-cursos-${new Date().toISOString().split('T')[0]}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                showToast('Relatório baixado!', 'success');
+            } catch (error) {
+                console.error('Error generating image:', error);
+                showToast('Erro ao gerar imagem', 'error');
+            }
+        }
+
+        // Utility Functions
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            try {
+                const [year, month, day] = dateStr.split('-');
+                return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleString('pt-BR');
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'Concluído': 'concluido',
+                'Em Andamento': 'andamento',
+                'Pendente': 'pendente',
+                'Cancelado': 'cancelado'
+            };
+            return classes[status] || 'pendente';
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span class="material-icons">${type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'warning'}</span>
+                ${message}
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function logActivity(action, description, type = 'add') {
+            const logEntry = {
+                action,
+                description,
+                type,
+                user: currentUser?.name || 'Sistema',
+                timestamp: firebaseAvailable ? firebase.firestore.FieldValue.serverTimestamp() : new Date()
+            };
+
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('activities').add(logEntry);
+                } else {
+                    const currentLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+                    currentLogs.unshift({...logEntry, timestamp: new Date()});
+                    localStorage.setItem('activityLogs', JSON.stringify(currentLogs.slice(0, 100)));
+                    renderActivityLogs();
+                }
+            } catch (error) {
+                console.error('Error logging activity:', error);
+            }
+        }
+
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('uploadZone');
+            const excelFileInput = document.getElementById('excelFileInput');
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('drag-over');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('drag-over');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    excelFileInput.files = files;
+                    handleExcelUpload({ target: excelFileInput });
+                }
+            });
+
+            // Prevent default drag behaviors for the whole document
+            document.addEventListener('dragover', (e) => e.preventDefault());
+            document.addEventListener('drop', (e) => e.preventDefault());
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    navigateTo(page);
+                });
+            });
+
+            // Mobile menu
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleSidebar);
+
+            // Search
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                renderCourses(e.target.value);
+            });
+
+            // Report
+            document.getElementById('reportBtn').addEventListener('click', openReportModal);
+
+            // Buttons
+            document.getElementById('newCourseBtn').addEventListener('click', () => openCourseModal());
+            document.getElementById('newInstructorBtn').addEventListener('click', () => openInstructorModal());
+            document.getElementById('newUserBtn').addEventListener('click', () => openUserModal());
+
+            // Calendar
+            document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+            document.getElementById('todayBtn').addEventListener('click', goToToday);
+
+            // Forms
+            document.getElementById('courseForm').addEventListener('submit', handleCourseSubmit);
+            document.getElementById('instructorForm').addEventListener('submit', handleInstructorSubmit);
+            document.getElementById('quickInstructorForm').addEventListener('submit', handleQuickInstructorSubmit);
+            document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
+            document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
+            document.getElementById('changeNameForm').addEventListener('submit', handleChangeName); 
+
+            // Settings
+            document.getElementById('excelFileInput').addEventListener('change', handleExcelUpload);
+            document.getElementById('exportCoursesBtn').addEventListener('click', exportCoursesToCsv);
+            document.getElementById('exportInstructorsBtn').addEventListener('click', exportInstructorsToCsv);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
