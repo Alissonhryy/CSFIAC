@@ -3453,7 +3453,7 @@
                 <div class="page-header">
                     <h2 class="page-title">Cursos</h2>
                     <div class="header-actions">
-                        <button class="btn btn-secondary notification-bell" id="notificationBtn" title="Notificações">
+                        <button class="btn btn-secondary notification-bell" id="notificationBtn" title="Notificações" style="position: relative; overflow: visible;">
                             <span class="material-icons">notifications</span>
                             <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
                         </button>
@@ -6884,7 +6884,7 @@
                                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
                                         <h3 style="margin: 0; font-size: 1.1rem;">${course.curso || 'Sem nome'}</h3>
                                         <span class="status-badge ${statusClass(course)}">${normalizeStatus(course.status)}</span>
-                                    </div>
+                            </div>
                                     <div style="display: flex; gap: 2rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.875rem;">
                                         <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">location_on</span> ${course.cidade || 'N/A'}</span>
                                         <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">event</span> ${course.inicio && course.fim ? formatDate(course.inicio) + ' - ' + formatDate(course.fim) : 'N/A'}</span>
@@ -6895,14 +6895,14 @@
                                 ${canEdit ? `
                                     <div class="course-actions" onclick="event.stopPropagation()">
                                         <button onclick="openCourseModal('${course.id}')" title="Editar">
-                                            <span class="material-icons">edit</span>
-                                        </button>
+                                    <span class="material-icons">edit</span>
+                                </button>
                                         <button class="delete" onclick="deleteCourse('${course.id}')" title="Excluir">
                                             <span class="material-icons">delete</span>
                                         </button>
                                     </div>
-                                ` : ''}
-                            </div>
+                            ` : ''}
+                        </div>
                         `).join('')}
                     </div>
                 `;
@@ -6918,7 +6918,7 @@
                     <div class="courses-timeline" style="position: relative; padding-left: 2rem;">
                         ${sortedByDate.map((course, index) => {
                             const date = course.inicio ? new Date(course.inicio) : null;
-                            return `
+                                return `
                                 <div class="timeline-item" style="position: relative; margin-bottom: 2rem; padding-left: 2rem;">
                                     <div style="position: absolute; left: -8px; top: 0; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; border: 3px solid var(--background);"></div>
                                     ${index < sortedByDate.length - 1 ? '<div style="position: absolute; left: -1px; top: 16px; width: 2px; height: calc(100% + 1rem); background: var(--border);"></div>' : ''}
@@ -6948,56 +6948,56 @@
                 coursesHTML = `
                     <div class="courses-grid">
                         ${paginatedCourses.map(course => `
-                            <div class="course-card" onclick="openViewCourseModal('${course.id}')">
-                                <div class="course-header">
-                                    <div>
-                                        <div class="course-title">${course.curso || 'Sem nome'}</div>
+                                    <div class="course-card" onclick="openViewCourseModal('${course.id}')">
+                                        <div class="course-header">
+                                            <div>
+                                                <div class="course-title">${course.curso || 'Sem nome'}</div>
                                         <div class="course-id">ID: ${course.idLote || 'N/A'}${course.lote || course.loteResponsavel ? ' | LOTE: ' + (course.lote || course.loteResponsavel) : ''}</div>
-                                    </div>
-                                    ${canEdit ? `
-                                        <div class="course-actions" onclick="event.stopPropagation()">
-                                            ${course.driveLink ? `
-                                                <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Abrir Google Drive">
-                                                    <span class="material-icons">folder</span>
-                                                </button>
+                                            </div>
+                                            ${canEdit ? `
+                                                <div class="course-actions" onclick="event.stopPropagation()">
+                                                    ${course.driveLink ? `
+                                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Abrir Google Drive">
+                                                            <span class="material-icons">folder</span>
+                                                        </button>
+                                                    ` : ''}
+                                                    <button onclick="openCourseModal('${course.id}')" title="Editar">
+                                                        <span class="material-icons">edit</span>
+                                                    </button>
+                                                    <button class="delete" onclick="deleteCourse('${course.id}')" title="Excluir">
+                                                        <span class="material-icons">delete</span>
+                                                    </button>
+                                                </div>
                                             ` : ''}
-                                            <button onclick="openCourseModal('${course.id}')" title="Editar">
-                                                <span class="material-icons">edit</span>
-                                            </button>
-                                            <button class="delete" onclick="deleteCourse('${course.id}')" title="Excluir">
-                                                <span class="material-icons">delete</span>
-                                            </button>
                                         </div>
-                                    ` : ''}
-                                </div>
-                                <div class="course-info">
-                                    <div class="course-info-item">
-                                        <span class="material-icons">location_on</span>
-                                        ${course.cidade || 'Local não definido'}${course.local ? ' - ' + course.local : ''}
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">event</span>
+                                        <div class="course-info">
+                                            <div class="course-info-item">
+                                                <span class="material-icons">location_on</span>
+                                                ${course.cidade || 'Local não definido'}${course.local ? ' - ' + course.local : ''}
+                                            </div>
+                                            <div class="course-info-item">
+                                                <span class="material-icons">event</span>
                                         <span>Período: ${course.inicio && course.fim ? formatDate(course.inicio) + ' - ' + formatDate(course.fim) : course.inicio ? formatDate(course.inicio) : course.fim ? formatDate(course.fim) : 'Não informado'}</span>
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">person</span>
-                                        ${course.instrutor || 'Instrutor não definido'}
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">groups</span>
-                                        ${course.alunos || 0} concludentes
-                                    </div>
-                                    <div>
+                                            </div>
+                                            <div class="course-info-item">
+                                                <span class="material-icons">person</span>
+                                                ${course.instrutor || 'Instrutor não definido'}
+                                            </div>
+                                            <div class="course-info-item">
+                                                <span class="material-icons">groups</span>
+                                                ${course.alunos || 0} concludentes
+                                            </div>
+                                            <div>
                                         <span class="status-badge ${statusClass(course)}">${normalizeStatus(course.status)}</span>
+                                            </div>
+                                        </div>
+                                        ${course.nota ? `
+                                            <div class="course-note">
+                                                <span class="material-icons">sticky_note_2</span>
+                                                <span class="course-note-text">${course.nota}</span>
+                                            </div>
+                                        ` : ''}
                                     </div>
-                                </div>
-                                ${course.nota ? `
-                                    <div class="course-note">
-                                        <span class="material-icons">sticky_note_2</span>
-                                        <span class="course-note-text">${course.nota}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
                         `).join('')}
                     </div>
                 `;
@@ -7403,7 +7403,7 @@
         let currentFilters = {};
         let currentSort = { field: 'name', direction: 'asc' };
         let currentPage = 1;
-        let itemsPerPage = 12;
+        let itemsPerPage = 10000; // Mostrar todos os cursos
         let notifications = [];
         let changeHistory = [];
         let unsavedChanges = false;
@@ -7665,8 +7665,10 @@
         }
         
         // 2. Notificações e Alertas
+        let notificationModalOpen = false;
+        
         function initializeNotifications() {
-            // Configurar botão de notificação
+            // Configurar botão de notificação apenas uma vez
             const setupNotificationButton = () => {
                 const notificationBtn = document.getElementById('notificationBtn');
                 if (notificationBtn && !notificationBtn.hasAttribute('data-notification-setup')) {
@@ -7674,7 +7676,9 @@
                     notificationBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        showNotificationsModal();
+                        if (!notificationModalOpen) {
+                            showNotificationsModal();
+                        }
                     });
                 }
             };
@@ -7684,7 +7688,6 @@
             
             // Tentar novamente após um delay (caso o botão ainda não exista)
             setTimeout(setupNotificationButton, 500);
-            setTimeout(setupNotificationButton, 2000);
             
             // Carregar notificações salvas
             loadNotifications();
@@ -7838,44 +7841,51 @@
         }
         
         function filterCourses(courses) {
+            // Se não houver filtros definidos, retornar todos os cursos
+            if (!currentFilters || Object.keys(currentFilters).length === 0) {
+                return [...courses];
+            }
+            
             let filtered = [...courses];
             
             // Busca por texto
-            if (currentFilters.search) {
-                const search = currentFilters.search.toLowerCase();
+            if (currentFilters.search && currentFilters.search.trim()) {
+                const search = currentFilters.search.toLowerCase().trim();
                 filtered = filtered.filter(c => 
-                    (c.nome || '').toLowerCase().includes(search) ||
+                    (c.curso || c.nome || '').toLowerCase().includes(search) ||
                     (c.cidade || '').toLowerCase().includes(search) ||
-                    (c.instrutor || '').toLowerCase().includes(search)
+                    (c.instrutor || '').toLowerCase().includes(search) ||
+                    (c.idLote || '').toLowerCase().includes(search) ||
+                    (c.lote || c.loteResponsavel || '').toLowerCase().includes(search)
                 );
             }
             
             // Filtro por status
-            if (currentFilters.status) {
+            if (currentFilters.status && currentFilters.status !== '') {
                 filtered = filtered.filter(c => normalizeStatus(c.status) === currentFilters.status);
             }
             
             // Filtro por cidade
-            if (currentFilters.city) {
+            if (currentFilters.city && currentFilters.city.trim()) {
                 filtered = filtered.filter(c => 
-                    (c.cidade || '').toLowerCase().includes(currentFilters.city.toLowerCase())
+                    (c.cidade || '').toLowerCase().includes(currentFilters.city.toLowerCase().trim())
                 );
             }
             
             // Filtro por instrutor
-            if (currentFilters.instructor) {
+            if (currentFilters.instructor && currentFilters.instructor !== '') {
                 filtered = filtered.filter(c => c.instrutor === currentFilters.instructor);
             }
             
             // Filtro por período
-            if (currentFilters.startDate) {
+            if (currentFilters.startDate && currentFilters.startDate.trim()) {
                 filtered = filtered.filter(c => {
                     if (!c.inicio) return false;
                     return new Date(c.inicio) >= new Date(currentFilters.startDate);
                 });
             }
             
-            if (currentFilters.endDate) {
+            if (currentFilters.endDate && currentFilters.endDate.trim()) {
                 filtered = filtered.filter(c => {
                     if (!c.fim) return false;
                     return new Date(c.fim) <= new Date(currentFilters.endDate);
@@ -7920,7 +7930,8 @@
             
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             
-            if (totalPages <= 1) {
+            // Ocultar paginação se mostrar todos os cursos ou se houver apenas 1 página
+            if (totalPages <= 1 || itemsPerPage >= 10000) {
                 container.style.display = 'none';
                 return;
             }
@@ -8599,7 +8610,8 @@
                 if (!badge) {
                     badge = document.createElement('span');
                     badge.id = 'notificationBadge';
-                    badge.style.cssText = 'position: absolute; top: -4px; right: -4px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+                    badge.className = 'notification-badge';
+                    badge.style.cssText = 'position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; z-index: 1000; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); border: 2px solid var(--background);';
                     btn.style.position = 'relative';
                     btn.appendChild(badge);
                 }
@@ -8613,6 +8625,9 @@
         }
 
         function showNotificationsModal() {
+            // Prevenir múltiplos modais
+            if (notificationModalOpen) return;
+            
             // Carregar notificações salvas
             const saved = localStorage.getItem('upcomingCoursesNotifications');
             const notifications = saved ? JSON.parse(saved) : (upcomingCoursesNotifications || []);
@@ -8622,46 +8637,94 @@
                 return;
             }
 
+            notificationModalOpen = true;
+            
+            // Remover modal existente se houver
+            const existingModal = document.querySelector('.notification-modal-overlay');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
             const modal = document.createElement('div');
-            modal.className = 'modal-overlay active';
+            modal.className = 'modal-overlay notification-modal-overlay active';
             modal.innerHTML = `
-                <div class="modal" style="max-width: 600px;">
-                    <div class="modal-header">
-                        <h3>
-                            <span class="material-icons" style="vertical-align: middle; margin-right: 0.5rem;">notifications</span>
-                            Notificações
-                        </h3>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
+                <div class="modal notification-modal" style="max-width: 650px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div class="modal-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white; padding: 1.5rem; border-bottom: none;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <span class="material-icons" style="font-size: 28px;">notifications_active</span>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Notificações</h3>
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; opacity: 0.9;">${notifications.length} curso(s) próximo(s) do vencimento</p>
+                            </div>
+                        </div>
+                        <button class="modal-close" onclick="closeNotificationModal()" style="background: rgba(255,255,255,0.2); color: white; border: none; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
                             <span class="material-icons">close</span>
                         </button>
                     </div>
-                    <div class="modal-body">
-                        <div style="margin-bottom: 1rem; padding: 1rem; background: var(--warning); color: white; border-radius: 8px;">
-                            <strong>⚠️ Cursos Próximos do Vencimento</strong>
-                            <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
-                                ${notifications.length} curso(s) vence(m) nos próximos 7 dias
-                            </p>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 1rem; max-height: 400px; overflow-y: auto;">
-                            ${notifications.map(course => {
+                    <div class="modal-body" style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            ${notifications.map((course, index) => {
                                 try {
                                     const endDate = new Date(course.fim);
                                     const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+                                    const isUrgent = daysLeft <= 3;
                                     return `
-                                        <div class="notification-item" style="padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border);">
-                                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                                <h4 style="margin: 0; font-size: 1rem;">${course.curso || 'Sem nome'}</h4>
-                                                <span class="status-badge ${getStatusClass(course.status)}">${normalizeStatus(course.status)}</span>
+                                        <div class="notification-item" style="padding: 1.25rem; background: ${isUrgent ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 'var(--surface)'}; border-radius: 12px; border: 1px solid ${isUrgent ? '#fbbf24' : 'var(--border)'}; transition: all 0.3s; cursor: pointer;" onclick="openViewCourseModal('${course.id}'); closeNotificationModal();">
+                                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                                <div style="flex: 1;">
+                                                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                                        <div style="width: 40px; height: 40px; background: ${isUrgent ? '#f59e0b' : 'var(--primary)'}; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                                                            <span class="material-icons" style="font-size: 20px;">${isUrgent ? 'warning' : 'event'}</span>
+                                                        </div>
+                                                        <div style="flex: 1;">
+                                                            <h4 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">${course.curso || 'Sem nome'}</h4>
+                                                            <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-secondary);">
+                                                                ${isUrgent ? '⚠️ Urgente!' : '⏰ Próximo do vencimento'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span class="status-badge ${getStatusClass(course.status)}" style="margin-left: 0.5rem;">${normalizeStatus(course.status)}</span>
                                             </div>
-                                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                                                <div><strong>Data de término:</strong> ${formatDate(course.fim)}</div>
-                                                <div><strong>Dias restantes:</strong> ${daysLeft} dia(s)</div>
-                                                ${course.cidade ? `<div><strong>Cidade:</strong> ${course.cidade}</div>` : ''}
-                                                ${course.instrutor ? `<div><strong>Instrutor:</strong> ${course.instrutor}</div>` : ''}
+                                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                                                    <span class="material-icons" style="font-size: 18px; color: var(--text-muted);">calendar_today</span>
+                                                    <div>
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">Data de término</div>
+                                                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">${formatDate(course.fim)}</div>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                                                    <span class="material-icons" style="font-size: 18px; color: ${isUrgent ? '#f59e0b' : 'var(--text-muted)'};">schedule</span>
+                                                    <div>
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">Dias restantes</div>
+                                                        <div style="font-size: 0.875rem; font-weight: 600; color: ${isUrgent ? '#f59e0b' : 'var(--text-primary)'};">${daysLeft} dia(s)</div>
+                                                    </div>
+                                                </div>
+                                                ${course.cidade ? `
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                                                    <span class="material-icons" style="font-size: 18px; color: var(--text-muted);">location_on</span>
+                                                    <div>
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">Cidade</div>
+                                                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">${course.cidade}</div>
+                                                    </div>
+                                                </div>
+                                                ` : ''}
+                                                ${course.instrutor ? `
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                                                    <span class="material-icons" style="font-size: 18px; color: var(--text-muted);">person</span>
+                                                    <div>
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">Instrutor</div>
+                                                        <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">${course.instrutor}</div>
+                                                    </div>
+                                                </div>
+                                                ` : ''}
                                             </div>
-                                            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="openViewCourseModal('${course.id}'); this.closest('.modal-overlay').remove();">
-                                                <span class="material-icons">visibility</span>
-                                                Ver Detalhes
+                                            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; border-radius: 8px;" onclick="event.stopPropagation(); openViewCourseModal('${course.id}'); closeNotificationModal();">
+                                                <span class="material-icons" style="font-size: 18px; vertical-align: middle;">visibility</span>
+                                                Ver Detalhes do Curso
                                             </button>
                                         </div>
                                     `;
@@ -8678,24 +8741,36 @@
             // Fechar ao clicar fora
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.remove();
+                    closeNotificationModal();
                 }
             });
+            
+            // Fechar com ESC
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeNotificationModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
         }
         
-        // Tornar função acessível globalmente
-        window.showNotificationsModal = showNotificationsModal;
-
-        // Atualizar evento do botão de notificação
-        document.addEventListener('DOMContentLoaded', () => {
-            const notificationBtn = document.getElementById('notificationBtn');
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showNotificationsModal();
-                });
+        function closeNotificationModal() {
+            const modal = document.querySelector('.notification-modal-overlay');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.remove();
+                    notificationModalOpen = false;
+                }, 200);
+            } else {
+                notificationModalOpen = false;
             }
-        });
+        }
+        
+        // Tornar funções acessíveis globalmente
+        window.showNotificationsModal = showNotificationsModal;
+        window.closeNotificationModal = closeNotificationModal;
 
         // 4. Modo de visualização - Lista, grid e timeline
         let currentViewMode = 'grid'; // 'grid', 'list', 'timeline'
@@ -9073,16 +9148,6 @@
             
             // Verificar cursos próximos do vencimento a cada hora
             setInterval(checkUpcomingCourseDeadlines, 60 * 60 * 1000);
-            
-            // Verificar também quando os dados são carregados
-            const originalLoadData = window.loadData;
-            if (originalLoadData) {
-                window.loadData = function() {
-                    const result = originalLoadData.apply(this, arguments);
-                    setTimeout(checkUpcomingCourseDeadlines, 1000);
-                    return result;
-                };
-            }
         }, 1000);
 
         // Interceptar ações para auditoria
