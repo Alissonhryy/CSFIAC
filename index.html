@@ -15507,30 +15507,5 @@
             // Log será feito dentro da função original
         }
     </script>
-
-<script>
-function applyRolePermissions() {
-    const role = localStorage.getItem("userRole") || "usuario";
-
-    const restrictedLabels = [
-        "Importar Dados",
-        "Zona de Perigo",
-        "Backup e Restauração"
-    ];
-
-    if (role !== "admin") {
-        document.querySelectorAll(".nav-item, button, .btn").forEach(el => {
-            const text = el.innerText || "";
-            if (restrictedLabels.some(label => text.includes(label))) {
-                el.style.display = "none";
-            }
-        });
-    }
-}
-
-document.addEventListener("DOMContentLoaded", applyRolePermissions);
-</script>
 </body>
-</html>
-
 </html>
