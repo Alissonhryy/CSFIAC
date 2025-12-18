@@ -128,3 +128,4 @@ async function syncData() {
   console.log('Sincronizando dados em background...');
 }
 
+
