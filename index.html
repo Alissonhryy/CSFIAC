@@ -27,12 +27,6 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- JSZip para download de múltiplos arquivos -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    
-    <!-- CSS Separado por Responsabilidade -->
-    <link rel="stylesheet" href="assets/css/base.css">
-    <link rel="stylesheet" href="assets/css/themes.css">
-    <link rel="stylesheet" href="assets/css/animations.css">
-    <!-- CSS inline mantido temporariamente para compatibilidade -->
     <style>
         :root {
             --primary: #6366f1;
@@ -53,14 +47,6 @@
             --overlay: rgba(0, 0, 0, 0.7);
             --card: #1e293b;
             --transition-speed: 0.3s;
-            /* Border-radius padronizado */
-            --radius-card: 16px;
-            --radius-button: 12px;
-            --radius-input: 10px;
-            --radius-small: 8px;
-            
-            /* Sistema de níveis de animação */
-            --motion-level: 1; /* 0 = none, 1 = normal (padrão), 2 = full */
         }
 
         /* Transição suave para temas */
@@ -138,17 +124,17 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ==================== SKELETON LOADING (CONSOLIDADO) ==================== */
-        @keyframes skeleton-loading {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        
+        /* ==================== SKELETON LOADING ==================== */
         .skeleton {
             background: linear-gradient(90deg, var(--surface) 25%, var(--surface-hover) 50%, var(--surface) 75%);
             background-size: 200% 100%;
             animation: skeleton-loading 1.5s infinite;
             border-radius: 8px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         
         .skeleton-card {
@@ -157,27 +143,21 @@
         }
         
         .skeleton-text {
-            height: 1rem;
-            margin-bottom: 0.5rem;
+            height: 16px;
+            margin-bottom: 8px;
         }
         
-        .skeleton-text.short { width: 60%; }
-        .skeleton-text.medium { width: 80%; }
+        .skeleton-text.short {
+            width: 60%;
+        }
         
-        .skeleton-avatar,
-        .skeleton-circle {
+        .skeleton-avatar {
             width: 48px;
             height: 48px;
             border-radius: 50%;
         }
         
         /* ==================== ANIMAÇÕES DE ENTRADA ==================== */
-        /* ==================== ANIMAÇÕES CONSOLIDADAS ==================== */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -198,20 +178,6 @@
                 opacity: 1;
                 transform: scale(1);
             }
-        }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
         }
         
         @keyframes slideInLeft {
@@ -766,6 +732,49 @@
             border-color: var(--primary);
         }
 
+        /* ==================== SKELETON LOADING ==================== */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface) 25%, var(--surface-hover) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        .skeleton-card {
+            height: 200px;
+            border-radius: 16px;
+        }
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .skeleton-text.short { width: 60%; }
+        .skeleton-text.medium { width: 80%; }
+        .skeleton-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        /* ==================== ANIMAÇÕES SUAVES ==================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
         .animate-slide-in {
             animation: slideIn 0.3s ease-out forwards;
         }
@@ -1010,8 +1019,208 @@
             gap: 0.5rem;
         }
         
-        /* Temas movidos para assets/css/themes.css */
+        /* Tema Verde */
+        /* ==================== TEMAS COMPLETOS ==================== */
+        :root.theme-green {
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-light: rgba(16, 185, 129, 0.1);
+        }
         
+        :root.theme-green:not(.light-mode) {
+            --background: #0f172a;
+            --sidebar: #064e3b;
+            --surface: #065f46;
+            --surface-hover: #047857;
+            --text-primary: #f8fafc;
+            --text-secondary: #d1fae5;
+            --text-muted: #a7f3d0;
+            --border: #10b981;
+            --overlay: rgba(15, 23, 42, 0.8);
+            --card: #065f46;
+        }
+        
+        :root.theme-green.light-mode {
+            --background: #ecfdf5;
+            --sidebar: #d1fae5;
+            --surface: #a7f3d0;
+            --surface-hover: #6ee7b7;
+            --text-primary: #064e3b;
+            --text-secondary: #065f46;
+            --text-muted: #10b981;
+            --border: #10b981;
+            --overlay: rgba(16, 185, 129, 0.5);
+            --card: #d1fae5;
+        }
+        
+        /* Tema Roxo */
+        :root.theme-purple {
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-light: rgba(139, 92, 246, 0.1);
+        }
+        
+        :root.theme-purple:not(.light-mode) {
+            --background: #0f172a;
+            --sidebar: #581c87;
+            --surface: #6b21a8;
+            --surface-hover: #7c3aed;
+            --text-primary: #f8fafc;
+            --text-secondary: #e9d5ff;
+            --text-muted: #ddd6fe;
+            --border: #8b5cf6;
+            --overlay: rgba(15, 23, 42, 0.8);
+            --card: #6b21a8;
+        }
+        
+        :root.theme-purple.light-mode {
+            --background: #faf5ff;
+            --sidebar: #f3e8ff;
+            --surface: #e9d5ff;
+            --surface-hover: #ddd6fe;
+            --text-primary: #581c87;
+            --text-secondary: #6b21a8;
+            --text-muted: #8b5cf6;
+            --border: #8b5cf6;
+            --overlay: rgba(139, 92, 246, 0.5);
+            --card: #f3e8ff;
+        }
+
+        /* Tema Azul */
+        :root.theme-blue {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: rgba(59, 130, 246, 0.1);
+        }
+        
+        :root.theme-blue:not(.light-mode) {
+            --background: #0f172a;
+            --sidebar: #1e3a8a;
+            --surface: #1e40af;
+            --surface-hover: #2563eb;
+            --text-primary: #f8fafc;
+            --text-secondary: #dbeafe;
+            --text-muted: #bfdbfe;
+            --border: #3b82f6;
+            --overlay: rgba(15, 23, 42, 0.8);
+            --card: #1e40af;
+        }
+        
+        :root.theme-blue.light-mode {
+            --background: #eff6ff;
+            --sidebar: #dbeafe;
+            --surface: #bfdbfe;
+            --surface-hover: #93c5fd;
+            --text-primary: #1e3a8a;
+            --text-secondary: #1e40af;
+            --text-muted: #3b82f6;
+            --border: #3b82f6;
+            --overlay: rgba(59, 130, 246, 0.5);
+            --card: #dbeafe;
+        }
+
+        /* Tema Laranja */
+        :root.theme-orange {
+            --primary: #f97316;
+            --primary-hover: #ea580c;
+            --primary-light: rgba(249, 115, 22, 0.1);
+        }
+        
+        :root.theme-orange:not(.light-mode) {
+            --background: #0f172a;
+            --sidebar: #7c2d12;
+            --surface: #9a3412;
+            --surface-hover: #c2410c;
+            --text-primary: #f8fafc;
+            --text-secondary: #fed7aa;
+            --text-muted: #fdba74;
+            --border: #f97316;
+            --overlay: rgba(15, 23, 42, 0.8);
+            --card: #9a3412;
+        }
+        
+        :root.theme-orange.light-mode {
+            --background: #fff7ed;
+            --sidebar: #ffedd5;
+            --surface: #fed7aa;
+            --surface-hover: #fdba74;
+            --text-primary: #7c2d12;
+            --text-secondary: #9a3412;
+            --text-muted: #f97316;
+            --border: #f97316;
+            --overlay: rgba(249, 115, 22, 0.5);
+            --card: #ffedd5;
+        }
+
+        /* Tema Rosa */
+        :root.theme-pink {
+            --primary: #ec4899;
+            --primary-hover: #db2777;
+            --primary-light: rgba(236, 72, 153, 0.1);
+        }
+        
+        :root.theme-pink:not(.light-mode) {
+            --background: #0f172a;
+            --sidebar: #831843;
+            --surface: #9f1239;
+            --surface-hover: #be185d;
+            --text-primary: #f8fafc;
+            --text-secondary: #fce7f3;
+            --text-muted: #fbcfe8;
+            --border: #ec4899;
+            --overlay: rgba(15, 23, 42, 0.8);
+            --card: #9f1239;
+        }
+        
+        :root.theme-pink.light-mode {
+            --background: #fdf2f8;
+            --sidebar: #fce7f3;
+            --surface: #fbcfe8;
+            --surface-hover: #f9a8d4;
+            --text-primary: #831843;
+            --text-secondary: #9f1239;
+            --text-muted: #ec4899;
+            --border: #ec4899;
+            --overlay: rgba(236, 72, 153, 0.5);
+            --card: #fce7f3;
+        }
+        
+        /* Temas adicionais (simplificados - sem dark/light mode completo) */
+        :root.theme-rose {
+            --primary: #f43f5e;
+            --primary-hover: #e11d48;
+            --primary-light: rgba(244, 63, 94, 0.1);
+        }
+        
+        :root.theme-cyan {
+            --primary: #06b6d4;
+            --primary-hover: #0891b2;
+            --primary-light: rgba(6, 182, 212, 0.1);
+        }
+        
+        :root.theme-teal {
+            --primary: #14b8a6;
+            --primary-hover: #0d9488;
+            --primary-light: rgba(20, 184, 166, 0.1);
+        }
+        
+        :root.theme-amber {
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --primary-light: rgba(245, 158, 11, 0.1);
+        }
+        
+        :root.theme-lime {
+            --primary: #84cc16;
+            --primary-hover: #65a30d;
+            --primary-light: rgba(132, 204, 22, 0.1);
+        }
+        
+        :root.theme-sky {
+            --primary: #0ea5e9;
+            --primary-hover: #0284c7;
+            --primary-light: rgba(14, 165, 233, 0.1);
+        }
 
         * {
             margin: 0;
@@ -1067,57 +1276,10 @@
             height: 10px;
             background: rgba(99, 102, 241, 0.3);
             border-radius: 50%;
-            /* Animação desabilitada por padrão para melhor performance */
-            animation: none;
-        }
-        
-        /* Habilitar partículas apenas em dispositivos potentes */
-        @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-            .particle {
-                animation: float 20s infinite;
-            }
+            animation: float 20s infinite;
         }
 
-        /* ==================== OTIMIZAÇÕES DE PERFORMANCE ==================== */
-        
-        /* Desabilitar animações infinitas em dispositivos com baixa performance */
-        @media (prefers-reduced-motion: reduce) {
-            .particle,
-            [class*="pulse"],
-            [class*="spin"]:not(.loading-spinner),
-            [class*="shimmer"],
-            [class*="glow"] {
-                animation: none !important;
-            }
-        }
-        
-        /* Reduzir animações infinitas em desktop também (tablets e menores) */
-        @media (max-width: 1024px) {
-            .particle {
-                animation: none !important;
-            }
-            
-            /* Reduzir animações infinitas não essenciais */
-            [class*="pulse"]:not(.important-pulse),
-            [class*="glow"]:not(.important-glow),
-            [class*="bounce"]:not(.important-bounce) {
-                animation-iteration-count: 1 !important;
-                animation-duration: 0.5s !important;
-            }
-        }
-        
-        /* Otimização adicional: limitar animações simultâneas */
-        @media (max-width: 768px) {
-            /* Desabilitar outras animações infinitas */
-            [class*="pulse"]:not(.skeleton):not(.loading-spinner),
-            [class*="shimmer"]:not(.skeleton),
-            [class*="glow"],
-            [class*="bounce"] {
-                animation: none !important;
-            }
-        }
-        
-        /* Otimizações específicas para mobile */
+        /* ==================== OTIMIZAÇÕES DE PERFORMANCE MOBILE ==================== */
         @media (max-width: 768px) {
             /* Reduzir animações em dispositivos móveis */
             *,
@@ -1129,7 +1291,7 @@
                 scroll-behavior: auto !important;
             }
             
-            /* Desabilitar animações complexas */
+            /* Desabilitar animações complexas - usar will-change para otimização */
             .animate-in,
             [class*="animate"],
             [class*="fade"],
@@ -1245,7 +1407,12 @@
         .login-logo .material-icons {
             font-size: 80px;
             color: var(--primary);
-            /* Animação pulse removida - excesso visual */
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .login-logo h1 {
@@ -2437,7 +2604,7 @@
             align-items: flex-start;
             gap: 12px;
             position: relative;
-            /* Animação pulseAlert removida - excesso visual */
+            animation: pulseAlert 2s ease-in-out infinite;
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
         }
         
@@ -2457,7 +2624,7 @@
             justify-content: center;
             color: white;
             flex-shrink: 0;
-            /* Animação pulseIcon removida - excesso visual */
+            animation: pulseIcon 1.5s ease-in-out infinite;
         }
         
         .course-alert.warning .course-alert-icon {
@@ -2559,7 +2726,7 @@
             height: 6px;
             border-radius: 50%;
             background: currentColor;
-            /* Animação pulse removida - excesso visual */
+            animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
@@ -4052,7 +4219,13 @@
             color: var(--text-muted);
             text-transform: uppercase;
             background: var(--background);
-            /* Animação headerPulse removida - excesso visual */
+            /* Adicionando animação de pulso nos headers */
+            animation: headerPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes headerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .calendar-day {
@@ -4107,8 +4280,18 @@
 
         .calendar-day.today {
             background: rgba(99, 102, 241, 0.1);
+            /* Adicionando animação de brilho no dia atual */
             position: relative;
-            /* Animação todayGlow removida - excesso visual */
+            animation: todayGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes todayGlow {
+            0%, 100% {
+                box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.2);
+            }
+            50% {
+                box-shadow: inset 0 0 30px rgba(99, 102, 241, 0.4);
+            }
         }
 
         .calendar-date {
@@ -5134,6 +5317,11 @@
             animation: fadeIn 0.3s ease;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .settings-section-title {
             display: flex;
             align-items: center;
@@ -5613,7 +5801,12 @@
             justify-content: center;
             background: linear-gradient(135deg, var(--primary), #a855f7);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-            /* Animação pulse-glow removida - excesso visual */
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3); }
+            50% { box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5); }
         }
 
         .settings-icon-large .material-icons {
@@ -5705,7 +5898,12 @@
         .upload-icon-bg .material-icons {
             font-size: 64px;
             color: white;
-            /* Animação bounce-icon removida - excesso visual */
+            animation: bounce-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
 
         .interactive-upload-zone:hover .upload-icon-bg {
@@ -5838,6 +6036,12 @@
             outline-offset: 2px;
         }
         
+        /* Melhorias de performance - will-change */
+        .kpi-card,
+        .course-card,
+        .instructor-card {
+            will-change: transform;
+        }
         
         /* Melhorias de responsividade */
         @media (max-width: 480px) {
@@ -7865,7 +8069,12 @@
 
         .danger-zone-card .settings-icon-large {
             background: linear-gradient(135deg, #ef4444, #dc2626);
-            /* Animação pulse-danger removida - excesso visual */
+            animation: pulse-danger 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 12px 32px rgba(239, 68, 68, 0.5); }
         }
 
         .danger-warning-box {
@@ -8016,7 +8225,7 @@
             justify-content: center;
             font-size: 0.7rem;
             font-weight: 600;
-            /* Animação pulse removida - excesso visual */
+            animation: pulse 2s infinite;
             box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
             pointer-events: none;
         }
@@ -8765,14 +8974,14 @@
 
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
-            <header class="sidebar-header">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <span class="material-icons" id="sidebarDefaultIcon" aria-hidden="true">school</span>
+                    <span class="material-icons" id="sidebarDefaultIcon">school</span>
                     <h1 id="sidebarProjectName">CSF + Qualificação</h1>
                 </div>
-            </header>
-            <nav class="sidebar-nav" aria-label="Navegação principal">
+            </div>
+            <nav class="sidebar-nav">
                 <div class="nav-item active" data-page="dashboard">
                     <span class="material-icons">dashboard</span>
                     <span class="nav-text">Dashboard</span>
@@ -8823,9 +9032,9 @@
         </button>
 
         <!-- Main Content -->
-        <main class="main-content" role="main">
+        <main class="main-content">
             <!-- Breadcrumbs -->
-            <nav class="breadcrumbs" id="breadcrumbs" aria-label="Navegação estrutural">
+            <div class="breadcrumbs" id="breadcrumbs">
                 <div class="breadcrumb-item" data-page="dashboard">
                     <span class="material-icons">home</span>
                     Início
@@ -8900,8 +9109,8 @@
             </button>
             
             <!-- Dashboard Page -->
-            <section class="page-section active" id="dashboardPage" aria-labelledby="dashboard-title">
-                <header class="header">
+            <section class="page-section active" id="dashboardPage">
+                <div class="header">
                     <button class="mobile-menu-btn" id="mobileMenuBtn">
                         <span class="material-icons">menu</span>
                     </button>
@@ -9521,42 +9730,6 @@
                                     <button class="btn btn-secondary btn-sm font-size-btn" data-size="small" onclick="setFontSize('small')">A-</button>
                                     <button class="btn btn-secondary btn-sm font-size-btn active" data-size="medium" onclick="setFontSize('medium')">A</button>
                                     <button class="btn btn-secondary btn-sm font-size-btn" data-size="large" onclick="setFontSize('large')">A+</button>
-                                </div>
-                            </div>
-
-                            <!-- Nível de Animações -->
-                            <div class="settings-option-card">
-                                <div class="settings-option-header">
-                                    <div class="settings-option-icon" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);">
-                                        <span class="material-icons">animation</span>
-                                    </div>
-                                    <div class="settings-option-info">
-                                        <h4>Nível de Animações</h4>
-                                        <p>Controle a quantidade de animações para melhorar performance</p>
-                                    </div>
-                                </div>
-                                <div class="motion-level-options" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-direction: column;">
-                                    <label class="motion-level-option" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--surface); border-radius: var(--radius-small); cursor: pointer;">
-                                        <input type="radio" name="motionLevel" value="0" id="motionLevel0" onchange="setMotionLevel(0)" style="cursor: pointer;">
-                                        <div style="flex: 1;">
-                                            <strong>Nenhuma</strong>
-                                            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Desabilita todas as animações</p>
-                                        </div>
-                                    </label>
-                                    <label class="motion-level-option" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--surface); border-radius: var(--radius-small); cursor: pointer;">
-                                        <input type="radio" name="motionLevel" value="1" id="motionLevel1" onchange="setMotionLevel(1)" checked style="cursor: pointer;">
-                                        <div style="flex: 1;">
-                                            <strong>Normal (Recomendado)</strong>
-                                            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Apenas animações essenciais</p>
-                                        </div>
-                                    </label>
-                                    <label class="motion-level-option" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--surface); border-radius: var(--radius-small); cursor: pointer;">
-                                        <input type="radio" name="motionLevel" value="2" id="motionLevel2" onchange="setMotionLevel(2)" style="cursor: pointer;">
-                                        <div style="flex: 1;">
-                                            <strong>Completo</strong>
-                                            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Todas as animações habilitadas</p>
-                                        </div>
-                                    </label>
                                 </div>
                             </div>
 
@@ -10600,9 +10773,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
-    <!-- Scripts Modulares -->
-    <script src="assets/js/ui.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -17352,7 +17522,7 @@ _Compartilhado via Sistema CSF_`;
             const root = document.documentElement;
             
             // Remover todas as classes de tema de cor
-            root.classList.remove('theme-blue', 'theme-green', 'theme-purple', 'theme-orange', 'theme-pink');
+            root.classList.remove('theme-blue', 'theme-green', 'theme-purple', 'theme-rose', 'theme-orange', 'theme-cyan', 'theme-teal', 'theme-amber', 'theme-pink', 'theme-lime', 'theme-sky');
             
             // Adicionar nova classe se não for default
             if (theme !== 'default') {
@@ -17416,22 +17586,10 @@ _Compartilhado via Sistema CSF_`;
             setFontSize(fontSize);
         }
         
-        // Função para atualizar o estado visual do controle de nível de animação
-        function updateMotionLevelUI() {
-            const level = getMotionLevel();
-            const radio = document.getElementById(`motionLevel${level}`);
-            if (radio) {
-                radio.checked = true;
-            }
-        }
-
         function initThemeSelector() {
             const savedTheme = localStorage.getItem('colorTheme') || 'default';
             setColorTheme(savedTheme);
             loadAppearancePreferences();
-            
-            // Atualizar UI do nível de animação
-            updateMotionLevelUI();
             
             document.querySelectorAll('.theme-color-btn, .theme-color-option').forEach(btn => {
                 btn.addEventListener('click', () => {
