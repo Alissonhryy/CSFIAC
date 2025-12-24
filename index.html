@@ -21650,12 +21650,22 @@ _Compartilhado via Sistema CSF_`;
             currentFormFields.forEach(field => {
                 if (field.enabled && field.key && !fieldMappings[field.key]) {
                     // Criar aliases baseados no nome do campo e nas opções (se for select)
-                    const aliases = [field.name.toLowerCase(), field.key.toLowerCase()];
+                    const aliases = [
+                        field.name.toLowerCase(), 
+                        field.key.toLowerCase(),
+                        // Adicionar variações comuns
+                        field.name.toLowerCase().replace(/\s+/g, '_'),
+                        field.name.toLowerCase().replace(/\s+/g, '-'),
+                        field.name.toLowerCase().replace(/\s+/g, ''),
+                    ];
                     
                     // Se for campo select, adicionar opções como aliases
                     if (field.type === 'select' && field.options && field.options.length > 0) {
                         field.options.forEach(option => {
-                            aliases.push(option.toLowerCase().trim());
+                            const optionLower = option.toLowerCase().trim();
+                            aliases.push(optionLower);
+                            aliases.push(optionLower.replace(/\s+/g, '_'));
+                            aliases.push(optionLower.replace(/\s+/g, '-'));
                         });
                     }
                     
@@ -21852,9 +21862,18 @@ _Compartilhado via Sistema CSF_`;
         function getMappedValue(row, field) {
             // Encontrar coluna mapeada para este campo
             for (const [column, mappedField] of Object.entries(excelColumnMapping)) {
-                if (mappedField === field && row[column] !== undefined) {
-                    return row[column];
+                if (mappedField === field) {
+                    const value = row[column];
+                    // Log para debug (apenas em desenvolvimento)
+                    if (isDevelopment && value !== null && value !== undefined) {
+                        safeLog(`Mapeamento: coluna "${column}" -> campo "${field}" = "${value}"`);
+                    }
+                    return value !== undefined ? value : null;
                 }
+            }
+            // Log para debug se não encontrou mapeamento
+            if (isDevelopment) {
+                safeWarn(`Campo "${field}" não encontrado no mapeamento. Mapeamento atual:`, excelColumnMapping);
             }
             return null;
         }
@@ -21871,14 +21890,18 @@ _Compartilhado via Sistema CSF_`;
                 return;
             }
             
-            // Coletar mapeamento de colunas
+            // Coletar mapeamento de colunas ATUALIZADO
+            excelColumnMapping = {}; // Limpar mapeamento anterior
             document.querySelectorAll('.column-mapping-select').forEach(select => {
                 const column = select.dataset.column;
                 const field = select.value;
-                if (field) {
+                if (field && field.trim() !== '') {
                     excelColumnMapping[column] = field;
                 }
             });
+            
+            // Log para debug
+            safeLog('Mapeamento de colunas coletado:', excelColumnMapping);
             
             // Validar dados
             const isValid = validateExcelData(previewData);
@@ -22294,6 +22317,29 @@ _Compartilhado via Sistema CSF_`;
         }
         
         async function processExcelDataWithReport(data, duplicateAction = 'update') {
+            // Garantir que o mapeamento está atualizado antes de processar
+            excelColumnMapping = {};
+            document.querySelectorAll('.column-mapping-select').forEach(select => {
+                const column = select.dataset.column;
+                const field = select.value;
+                if (field && field.trim() !== '') {
+                    excelColumnMapping[column] = field;
+                }
+            });
+            
+            // Log do mapeamento final
+            safeLog('Mapeamento final antes de processar:', excelColumnMapping);
+            
+            // Verificar se campos importantes estão mapeados
+            const importantFields = ['curso', 'inicio', 'fim'];
+            const unmappedFields = importantFields.filter(field => 
+                !Object.values(excelColumnMapping).includes(field)
+            );
+            
+            if (unmappedFields.length > 0) {
+                safeWarn('Campos importantes não mapeados:', unmappedFields);
+            }
+            
             excelImportReport = {
                 total: data.length,
                 imported: 0,
@@ -22389,35 +22435,74 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function mapRowToCourse(row) {
+            // Carregar formFields para incluir campos customizados
+            const currentFormFields = typeof formFields !== 'undefined' 
+                ? formFields 
+                : JSON.parse(localStorage.getItem('formFields') || '[]');
+            
+            // Campos básicos do sistema
             const curso = {
                 curso: getMappedValue(row, 'curso') || '',
+                idLote: parseInt(getMappedValue(row, 'idLote')) || 0,
                 lote: getMappedValue(row, 'lote') || '',
+                loteResponsavel: getMappedValue(row, 'lote') || getMappedValue(row, 'loteResponsavel') || '',
+                cargaHoraria: getMappedValue(row, 'cargaHoraria') || '',
                 cidade: getMappedValue(row, 'cidade') || '',
+                local: getMappedValue(row, 'local') || '',
                 instrutor: getMappedValue(row, 'instrutor') || '',
                 inicio: formatExcelDate(getMappedValue(row, 'inicio')) || '',
                 fim: formatExcelDate(getMappedValue(row, 'fim')) || '',
-                status: getMappedValue(row, 'status') || 'Em Andamento',
-                concludentes: parseInt(getMappedValue(row, 'concludentes')) || 0
+                status: normalizeStatus(getMappedValue(row, 'status') || 'Pendente'),
+                alunos: parseInt(getMappedValue(row, 'concludentes')) || parseInt(getMappedValue(row, 'alunos')) || 0,
+                concludentes: parseInt(getMappedValue(row, 'concludentes')) || parseInt(getMappedValue(row, 'alunos')) || 0,
+                nota: getMappedValue(row, 'nota') || '',
+                driveLink: getMappedValue(row, 'driveLink') || '',
+                albumLink: getMappedValue(row, 'albumLink') || ''
             };
             
+            // Adicionar campos customizados do formulário
+            currentFormFields.forEach(field => {
+                if (field.enabled && field.key && !curso.hasOwnProperty(field.key)) {
+                    const value = getMappedValue(row, field.key);
+                    if (value !== null && value !== undefined) {
+                        // Processar valor baseado no tipo do campo
+                        if (field.type === 'number') {
+                            curso[field.key] = parseInt(value) || 0;
+                        } else if (field.type === 'date') {
+                            curso[field.key] = formatExcelDate(value) || '';
+                        } else {
+                            curso[field.key] = String(value).trim();
+                        }
+                    }
+                }
+            });
+            
+            // Preservar todos os outros campos que podem ter sido importados mas não estão no formulário
+            // Isso garante que campos adicionais do Excel não sejam perdidos
+            Object.keys(row).forEach(columnName => {
+                // Verificar se a coluna foi mapeada para algum campo
+                const mappedField = excelColumnMapping[columnName];
+                
+                // Se a coluna não foi mapeada OU foi mapeada mas o valor não foi processado
+                if (!mappedField && row[columnName] !== null && row[columnName] !== undefined && row[columnName] !== '') {
+                    // Verificar se já não existe no curso com o nome da coluna original
+                    if (!curso.hasOwnProperty(columnName)) {
+                        // Adicionar como campo adicional (sanitizado)
+                        const sanitizedKey = columnName.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
+                        if (sanitizedKey && !curso.hasOwnProperty(sanitizedKey)) {
+                            curso[sanitizedKey] = String(row[columnName]).trim();
+                        }
+                    }
+                }
+            });
+            
+            // Log para debug (apenas em desenvolvimento)
+            if (isDevelopment) {
+                safeLog('Curso mapeado:', curso);
+                safeLog('Mapeamento usado:', excelColumnMapping);
+            }
+            
             return curso;
-        }
-        
-        function formatExcelDate(dateValue) {
-            if (!dateValue) return '';
-            
-            // Se já for uma data válida
-            if (dateValue instanceof Date) {
-                return dateValue.toISOString().split('T')[0];
-            }
-            
-            // Tentar parsear como data
-            const date = new Date(dateValue);
-            if (!isNaN(date.getTime())) {
-                return date.toISOString().split('T')[0];
-            }
-            
-            return '';
         }
         
         function showImportReport() {
