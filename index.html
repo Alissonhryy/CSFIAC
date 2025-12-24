@@ -15114,7 +15114,8 @@ _Compartilhado via Sistema CSF_`;
                 }
             });
             
-            const courseData = {
+            // Coletar dados do formulário
+            const formData = {
                 curso: document.getElementById('courseName').value.trim(),
                 idLote: idLote ? parseInt(idLote) : 0,
                 lote: lote || '',
@@ -15135,7 +15136,7 @@ _Compartilhado via Sistema CSF_`;
             };
             
             // Validar número de alunos
-            if (courseData.alunos < 0) {
+            if (formData.alunos < 0) {
                 showToast('Número de concludentes não pode ser negativo', 'error');
                 return;
             }
@@ -15146,30 +15147,63 @@ _Compartilhado via Sistema CSF_`;
             try {
                 let changes = {};
                 let oldCourse = null;
+                let courseData = {};
                 
                 if (editingCourseId) {
+                    // Ao editar: preservar todos os campos existentes e mesclar com os novos
                     oldCourse = cursos.find(c => c.id === editingCourseId);
                     if (oldCourse) {
-                        Object.keys(courseData).forEach(key => {
+                        // Começar com uma cópia profunda do curso original para preservar TODOS os campos
+                        courseData = JSON.parse(JSON.stringify(oldCourse));
+                        
+                        // Atualizar apenas os campos que estão no formulário
+                        // Isso garante que campos importados do Excel que não estão no formulário sejam preservados
+                        Object.keys(formData).forEach(key => {
                             const oldValue = oldCourse[key];
-                            const newValue = courseData[key];
-                            // Comparar valores normalizados
+                            const newValue = formData[key];
+                            
+                            // Sempre atualizar o campo com o valor do formulário (mesmo se vazio)
+                            // Isso permite que o usuário limpe campos se necessário
+                            courseData[key] = newValue;
+                            
+                            // Registrar mudanças para histórico
                             if (key === 'status') {
                                 if (normalizeStatus(oldValue) !== normalizeStatus(newValue)) {
                                     changes[key] = { old: oldValue, new: newValue };
                                 }
-                            } else if (oldValue !== newValue) {
-                                changes[key] = { old: oldValue !== null && oldValue !== undefined ? oldValue : '', new: newValue !== null && newValue !== undefined ? newValue : '' };
+                            } else if (String(oldValue || '') !== String(newValue || '')) {
+                                changes[key] = { 
+                                    old: oldValue !== null && oldValue !== undefined ? oldValue : '', 
+                                    new: newValue !== null && newValue !== undefined ? newValue : '' 
+                                };
                             }
                         });
+                        
+                        // Preservar o ID
+                        courseData.id = editingCourseId;
+                        
+                        // IMPORTANTE: Preservar todos os outros campos que não estão no formulário
+                        // Isso inclui campos importados do Excel que podem não estar visíveis no formulário
+                        Object.keys(oldCourse).forEach(key => {
+                            // Se o campo não está no formData, preservá-lo do curso original
+                            if (!(key in formData) && key !== 'id') {
+                                courseData[key] = oldCourse[key];
+                            }
+                        });
+                    } else {
+                        // Se não encontrou o curso, criar novo
+                        courseData = { ...formData };
                     }
+                } else {
+                    // Novo curso: usar apenas os dados do formulário
+                    courseData = { ...formData };
                 }
                 
                 if (firebaseAvailable) {
                     if (editingCourseId) {
-                        courseData.id = editingCourseId;
                         const docRef = await db.collection('cursos').doc(editingCourseId);
-                        await docRef.set(courseData); // Usar set ao invés de update para substituir completamente
+                        // Usar set para garantir que todos os campos sejam preservados
+                        await docRef.set(courseData);
                         
                         // Atualizar array local
                         const index = cursos.findIndex(c => c.id === editingCourseId);
@@ -15192,8 +15226,7 @@ _Compartilhado via Sistema CSF_`;
                     if (editingCourseId) {
                         const index = existingCourses.findIndex(c => c.id === editingCourseId);
                         if (index !== -1) {
-                            // Substituir completamente, mantendo apenas o id
-                            courseData.id = editingCourseId;
+                            // Preservar todos os campos existentes e mesclar com os novos
                             existingCourses[index] = courseData;
                             if (Object.keys(changes).length > 0) {
                                 addCourseHistoryEntry(editingCourseId, 'updated', changes, oldCourse);
@@ -21554,11 +21587,16 @@ _Compartilhado via Sistema CSF_`;
         
         // Detectar mapeamento automático de colunas - VERSÃO MELHORADA E MAIS INTELIGENTE
         function detectColumnMapping(headers) {
+            // Carregar formFields atualizados do localStorage
+            const currentFormFields = typeof formFields !== 'undefined' 
+                ? formFields 
+                : JSON.parse(localStorage.getItem('formFields') || '[]');
+            
             const fieldMappings = {
                 'curso': ['curso', 'nome', 'nome do curso', 'titulo', 'título', 'name', 'title', 'turma', 'capacitação'],
                 'idLote': ['id', 'id lote', 'id do lote', 'código', 'codigo', 'numero', 'número', 'nº', 'n°'],
                 'lote': ['lote', 'lote do curso', 'número do lote', 'numero do lote', 'grupo', 'batch'],
-                'cargaHoraria': ['carga horária', 'carga horaria', 'carga', 'horas', 'hora', 'ch', 'duração', 'duracao'],
+                'cargaHoraria': ['carga horária', 'carga horaria', 'carga', 'horas', 'hora', 'ch', 'duração', 'duracao', 'cozinha'],
                 'cidade': ['cidade', 'local', 'localidade', 'município', 'municipio', 'municipio', 'city', 'município de realização'],
                 'local': ['local', 'endereço', 'endereco', 'address', 'local de realização', 'local de realizacao', 'localização', 'localizacao'],
                 'instrutor': ['instrutor', 'professor', 'docente', 'facilitador', 'instructor', 'teacher', 'responsável', 'responsavel'],
@@ -21570,6 +21608,23 @@ _Compartilhado via Sistema CSF_`;
                 'driveLink': ['drive', 'link drive', 'link do drive', 'instrumental', 'instrumentais', 'arquivos', 'arquivo', 'documentos', 'docs'],
                 'albumLink': ['album', 'álbum', 'album de fotos', 'fotos', 'fotografias', 'imagens', 'photos', 'galeria', 'galeria de fotos']
             };
+            
+            // Adicionar campos customizados do formulário aos mapeamentos
+            currentFormFields.forEach(field => {
+                if (field.enabled && field.key && !fieldMappings[field.key]) {
+                    // Criar aliases baseados no nome do campo e nas opções (se for select)
+                    const aliases = [field.name.toLowerCase(), field.key.toLowerCase()];
+                    
+                    // Se for campo select, adicionar opções como aliases
+                    if (field.type === 'select' && field.options && field.options.length > 0) {
+                        field.options.forEach(option => {
+                            aliases.push(option.toLowerCase().trim());
+                        });
+                    }
+                    
+                    fieldMappings[field.key] = aliases;
+                }
+            });
             
             excelColumnMapping = {};
             
@@ -21615,7 +21670,13 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function getColumnMappingFields(headers) {
-            const fieldOptions = [
+            // Carregar formFields atualizados do localStorage
+            const currentFormFields = typeof formFields !== 'undefined' 
+                ? formFields 
+                : JSON.parse(localStorage.getItem('formFields') || '[]');
+            
+            // Campos padrão do sistema
+            const defaultFieldOptions = [
                 { value: '', label: '-- Não mapear --' },
                 { value: 'idLote', label: 'ID' },
                 { value: 'curso', label: 'Nome do Curso' },
@@ -21633,20 +21694,47 @@ _Compartilhado via Sistema CSF_`;
                 { value: 'albumLink', label: 'Álbum de Fotos' }
             ];
             
-            return headers.map(header => `
-                <div class="column-mapping-item">
-                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.85rem; color: var(--text-secondary);">
-                        ${escapeHtml(header)}
-                    </label>
-                    <select class="form-select column-mapping-select" data-column="${escapeHtmlAttribute(header)}" style="width: 100%;">
-                        ${fieldOptions.map(opt => `
-                            <option value="${opt.value}" ${excelColumnMapping[header] === opt.value ? 'selected' : ''}>
-                                ${opt.label}
-                            </option>
-                        `).join('')}
-                    </select>
-                </div>
-            `).join('');
+            // Adicionar campos customizados do formulário
+            const customFields = currentFormFields
+                .filter(field => field.enabled && !defaultFieldOptions.find(opt => opt.value === field.key))
+                .map(field => ({
+                    value: field.key,
+                    label: field.name,
+                    type: field.type,
+                    options: field.options || []
+                }));
+            
+            // Combinar campos padrão e customizados
+            const fieldOptions = [...defaultFieldOptions, ...customFields];
+            
+            return headers.map(header => {
+                // Para campos do tipo select, criar opções baseadas nas opções do campo
+                let optionsHtml = fieldOptions.map(opt => {
+                    if (opt.value === '') {
+                        return `<option value="${opt.value}" ${excelColumnMapping[header] === opt.value ? 'selected' : ''}>${opt.label}</option>`;
+                    }
+                    
+                    // Se for um campo select com opções, mostrar as opções como sugestões
+                    if (opt.options && opt.options.length > 0) {
+                        const selected = excelColumnMapping[header] === opt.value ? 'selected' : '';
+                        return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+                    }
+                    
+                    const selected = excelColumnMapping[header] === opt.value ? 'selected' : '';
+                    return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+                }).join('');
+                
+                return `
+                    <div class="column-mapping-item">
+                        <label style="display: block; margin-bottom: 0.25rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            ${escapeHtml(header)}
+                        </label>
+                        <select class="form-select column-mapping-select" data-column="${escapeHtmlAttribute(header)}" style="width: 100%;">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+            }).join('');
         }
         
         function updateColumnMappingSelects(headers) {
@@ -23932,8 +24020,40 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}`).join(
             renderFormPreview();
             renderCardFieldsList();
             renderCardPreview();
+            
+            // Atualizar mapeamento de colunas se estiver visível
+            updateColumnMappingIfVisible();
+            
             closeModal('formFieldEditorModal');
             showToast(editingFormFieldId ? 'Campo atualizado!' : 'Campo adicionado!', 'success');
+        }
+        
+        // Função para atualizar mapeamento de colunas quando campos são alterados
+        function updateColumnMappingIfVisible() {
+            const preview = document.getElementById('importPreview');
+            if (!preview || preview.style.display === 'none') return;
+            
+            const container = document.getElementById('previewTableContainer');
+            if (!container) return;
+            
+            // Verificar se há dados de preview
+            if (!previewData || previewData.length === 0) return;
+            
+            const headers = Object.keys(previewData[0] || {});
+            if (headers.length === 0) return;
+            
+            // Encontrar a seção de mapeamento de colunas
+            const mappingSection = container.querySelector('.column-mapping-section');
+            if (!mappingSection) return;
+            
+            // Atualizar apenas a grid de mapeamento
+            const mappingGrid = mappingSection.querySelector('.column-mapping-grid');
+            if (mappingGrid) {
+                mappingGrid.innerHTML = getColumnMappingFields(headers);
+                
+                // Restaurar mapeamentos existentes
+                updateColumnMappingSelects(headers);
+            }
         }
 
         function deleteFormField(fieldId) {
@@ -23956,6 +24076,10 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}`).join(
             renderFormPreview();
             renderCardFieldsList();
             renderCardPreview();
+            
+            // Atualizar mapeamento de colunas se estiver visível
+            updateColumnMappingIfVisible();
+            
             showToast('Campo excluído!', 'success');
         }
 
