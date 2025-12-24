@@ -21528,7 +21528,7 @@ _Compartilhado via Sistema CSF_`;
                         <span class="material-icons" style="font-size: 20px;">settings</span>
                         Mapeamento de Colunas
                     </h5>
-                    <div class="column-mapping-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div class="column-mapping-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;" id="columnMappingGrid">
                         ${getColumnMappingFields(headers)}
                     </div>
                     <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
@@ -21566,13 +21566,15 @@ _Compartilhado via Sistema CSF_`;
                     <table class="preview-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: var(--surface); position: sticky; top: 0; z-index: 10;">
+                                <th style="padding: 0.75rem; border: 1px solid var(--border); text-align: center; font-weight: 600; width: 60px;">Linha</th>
                                 ${headers.map(h => `<th style="padding: 0.75rem; border: 1px solid var(--border); text-align: left; font-weight: 600;">${escapeHtml(h)}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
                             ${previewData.map((row, idx) => `
-                                <tr class="preview-row" data-index="${idx}">
-                                    ${headers.map(h => `<td style="padding: 0.5rem; border: 1px solid var(--border);">${escapeHtml(String(row[h] !== undefined && row[h] !== null ? row[h] : ''))}</td>`).join('')}
+                                <tr class="preview-row" data-index="${idx}" data-line="${idx + 2}">
+                                    <td style="padding: 0.5rem; border: 1px solid var(--border); text-align: center; font-weight: 600; background: var(--surface);">${idx + 2}</td>
+                                    ${headers.map(h => `<td style="padding: 0.5rem; border: 1px solid var(--border);" data-column="${escapeHtmlAttribute(h)}" contenteditable="true" onblur="updatePreviewCell(${idx}, '${escapeHtmlAttribute(h)}', this.textContent)">${escapeHtml(String(row[h] !== undefined && row[h] !== null ? row[h] : ''))}</td>`).join('')}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -21582,6 +21584,41 @@ _Compartilhado via Sistema CSF_`;
             
             container.innerHTML = html;
             preview.style.display = 'block';
+            
+            // Adicionar listeners para validação automática quando mapeamento mudar
+            setTimeout(() => {
+                document.querySelectorAll('.column-mapping-select').forEach(select => {
+                    select.addEventListener('change', () => {
+                        // Atualizar mapeamento
+                        const column = select.dataset.column;
+                        const field = select.value;
+                        if (field) {
+                            excelColumnMapping[column] = field;
+                        } else {
+                            delete excelColumnMapping[column];
+                        }
+                        
+                        // Revalidar se houver previewData
+                        if (previewData && previewData.length > 0) {
+                            const isValid = validateExcelData(previewData);
+                            if (!isValid) {
+                                showValidationErrors();
+                            } else {
+                                // Remover erros se não houver mais
+                                const errorsDiv = container.querySelector('.validation-errors');
+                                if (errorsDiv) errorsDiv.remove();
+                                // Remover destaques de erro
+                                document.querySelectorAll('.preview-row.has-error').forEach(row => {
+                                    row.style.background = '';
+                                    row.style.borderLeft = '';
+                                    row.classList.remove('has-error');
+                                });
+                            }
+                        }
+                    });
+                });
+            }, 100);
+            
             safeLog('Preview exibido com sucesso');
         }
         
@@ -21847,22 +21884,25 @@ _Compartilhado via Sistema CSF_`;
             const isValid = validateExcelData(previewData);
             const continueOnErrors = document.getElementById('continueOnErrors')?.checked || false;
             
-            if (!isValid && !continueOnErrors) {
+            // Sempre mostrar erros se houver
+            if (!isValid) {
                 showValidationErrors();
-                return;
-            }
-            
-            if (!isValid && continueOnErrors) {
+                
+                if (!continueOnErrors) {
+                    showToast(`Foram encontrados ${excelValidationErrors.length} erro(s). Corrija os erros antes de importar ou marque "Continuar mesmo com erros".`, 'error', { duration: 5000 });
+                    return;
+                }
+                
+                // Se continuar com erros está marcado, perguntar confirmação
                 const confirmed = await showConfirmModal({
                     type: 'warning',
                     title: 'Erros encontrados',
-                    message: `Foram encontrados ${excelValidationErrors.length} erro(s) na planilha. Deseja continuar mesmo assim?`,
+                    message: `Foram encontrados ${excelValidationErrors.length} erro(s) na planilha. Os erros estão destacados na tabela. Deseja continuar mesmo assim?`,
                     confirmText: 'Continuar',
-                    cancelText: 'Cancelar'
+                    cancelText: 'Corrigir Erros'
                 });
                 
                 if (!confirmed) {
-                    showValidationErrors();
                     return;
                 }
             }
@@ -21893,23 +21933,333 @@ _Compartilhado via Sistema CSF_`;
             const container = document.getElementById('previewTableContainer');
             if (!container) return;
             
+            // Remover erros anteriores se existirem
+            const existingErrors = container.querySelector('.validation-errors');
+            if (existingErrors) existingErrors.remove();
+            
+            // Agrupar erros por linha
+            const errorsByLine = {};
+            excelValidationErrors.forEach(err => {
+                if (err.line) {
+                    if (!errorsByLine[err.line]) {
+                        errorsByLine[err.line] = [];
+                    }
+                    errorsByLine[err.line].push(err);
+                }
+            });
+            
+            // Destacar linhas com erros na tabela
+            document.querySelectorAll('.preview-row').forEach((row, index) => {
+                const lineNumber = index + 2; // +2 porque linha 1 é cabeçalho
+                if (errorsByLine[lineNumber]) {
+                    row.style.background = 'rgba(239, 68, 68, 0.1)';
+                    row.style.borderLeft = '4px solid var(--danger)';
+                    row.classList.add('has-error');
+                    row.setAttribute('data-error-line', lineNumber);
+                    row.setAttribute('title', `${errorsByLine[lineNumber].length} erro(s) encontrado(s)`);
+                } else {
+                    row.style.background = '';
+                    row.style.borderLeft = '';
+                    row.classList.remove('has-error');
+                    row.removeAttribute('data-error-line');
+                    row.removeAttribute('title');
+                }
+            });
+            
+            // Criar HTML dos erros com opções de correção
             const errorsHtml = `
-                <div class="validation-errors" style="margin-bottom: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 8px;">
-                    <h5 style="color: var(--danger); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="material-icons">error</span>
-                        Erros encontrados (${excelValidationErrors.length})
-                    </h5>
-                    <div style="max-height: 200px; overflow-y: auto;">
-                        ${excelValidationErrors.map(err => `
-                            <div style="padding: 0.5rem; margin-bottom: 0.25rem; background: var(--surface); border-radius: 4px;">
-                                <strong>Linha ${err.line}:</strong> ${err.message}
-                            </div>
-                        `).join('')}
+                <div class="validation-errors" style="margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); border-radius: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <h5 style="color: var(--danger); margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                            <span class="material-icons" style="font-size: 24px;">error_outline</span>
+                            Erros encontrados (${excelValidationErrors.length})
+                        </h5>
+                        <button class="btn btn-secondary btn-sm" onclick="this.closest('.validation-errors').querySelector('.errors-list').scrollIntoView({ behavior: 'smooth', block: 'start' })" style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span class="material-icons" style="font-size: 16px;">visibility</span>
+                            Ver na tabela
+                        </button>
+                    </div>
+                    <div class="errors-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;">
+                        ${Object.keys(errorsByLine).sort((a, b) => parseInt(a) - parseInt(b)).map(lineNumber => {
+                            const lineErrors = errorsByLine[lineNumber];
+                            const rowIndex = parseInt(lineNumber) - 2; // Converter para índice do array
+                            return `
+                                <div class="error-item" style="padding: 1rem; margin-bottom: 0.75rem; background: var(--surface); border-radius: 8px; border-left: 4px solid var(--danger);" data-line="${lineNumber}">
+                                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 1rem;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                <span class="material-icons" style="font-size: 18px; color: var(--danger);">error</span>
+                                                <strong style="color: var(--danger);">Linha ${lineNumber}</strong>
+                                                <span style="font-size: 0.85rem; color: var(--text-muted);">(${lineErrors.length} erro${lineErrors.length > 1 ? 's' : ''})</span>
+                                            </div>
+                                            <div style="margin-left: 1.75rem;">
+                                                ${lineErrors.map(err => `
+                                                    <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                                            <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: var(--danger); color: white; border-radius: 4px; font-weight: 600;">
+                                                                ${getErrorTypeLabel(err.type)}
+                                                            </span>
+                                                            <span style="color: var(--text-primary);">${err.message}</span>
+                                                        </div>
+                                                        ${err.field ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-left: 0.5rem;">Campo: <strong>${getFieldLabel(err.field)}</strong></div>` : ''}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="scrollToErrorLine(${rowIndex})" style="display: flex; align-items: center; gap: 0.25rem; white-space: nowrap;">
+                                            <span class="material-icons" style="font-size: 16px;">edit</span>
+                                            Corrigir
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <button class="btn btn-secondary btn-sm" onclick="revalidateData()" style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span class="material-icons" style="font-size: 16px;">refresh</span>
+                            Revalidar
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="fixCommonErrors()" style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span class="material-icons" style="font-size: 16px;">auto_fix_high</span>
+                            Corrigir Automaticamente
+                        </button>
                     </div>
                 </div>
             `;
             
             container.insertAdjacentHTML('afterbegin', errorsHtml);
+            
+            // Scroll suave para o primeiro erro
+            const firstError = container.querySelector('.error-item');
+            if (firstError) {
+                setTimeout(() => {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+        
+        function getErrorTypeLabel(type) {
+            const labels = {
+                'obrigatorio': 'Obrigatório',
+                'data_invalida': 'Data Inválida',
+                'tipo_errado': 'Tipo Errado',
+                'geral': 'Geral'
+            };
+            return labels[type] || type;
+        }
+        
+        function getFieldLabel(field) {
+            const labels = {
+                'curso': 'Nome do Curso',
+                'inicio': 'Data de Início',
+                'fim': 'Data de Fim',
+                'concludentes': 'Concludentes',
+                'idLote': 'ID',
+                'lote': 'Lote',
+                'cidade': 'Cidade',
+                'local': 'Local',
+                'instrutor': 'Instrutor',
+                'status': 'Status'
+            };
+            return labels[field] || field;
+        }
+        
+        function scrollToErrorLine(rowIndex) {
+            const rows = document.querySelectorAll('.preview-row');
+            if (rows[rowIndex]) {
+                rows[rowIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Destacar a linha
+                rows[rowIndex].style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    rows[rowIndex].style.animation = '';
+                }, 1000);
+            }
+        }
+        
+        function revalidateData() {
+            if (!previewData || previewData.length === 0) {
+                showToast('Nenhum dado para validar', 'warning');
+                return;
+            }
+            
+            // Coletar mapeamento atualizado
+            document.querySelectorAll('.column-mapping-select').forEach(select => {
+                const column = select.dataset.column;
+                const field = select.value;
+                if (field) {
+                    excelColumnMapping[column] = field;
+                }
+            });
+            
+            // Revalidar
+            const isValid = validateExcelData(previewData);
+            
+            // Atualizar exibição de erros
+            showValidationErrors();
+            
+            if (isValid) {
+                showToast('Todos os erros foram corrigidos!', 'success');
+            } else {
+                showToast(`${excelValidationErrors.length} erro(s) ainda encontrado(s)`, 'warning');
+            }
+        }
+        
+        function fixCommonErrors() {
+            if (!previewData || previewData.length === 0) return;
+            
+            let fixed = 0;
+            
+            previewData.forEach((row, index) => {
+                const lineNumber = index + 2;
+                
+                // Corrigir datas inválidas
+                const inicioField = getMappedValue(row, 'inicio');
+                if (inicioField && !isValidDate(inicioField)) {
+                    const fixedDate = tryFixDate(inicioField);
+                    if (fixedDate) {
+                        const column = getMappedColumn('inicio');
+                        if (column && row[column] !== undefined) {
+                            row[column] = fixedDate;
+                            fixed++;
+                        }
+                    }
+                }
+                
+                const fimField = getMappedValue(row, 'fim');
+                if (fimField && !isValidDate(fimField)) {
+                    const fixedDate = tryFixDate(fimField);
+                    if (fixedDate) {
+                        const column = getMappedColumn('fim');
+                        if (column && row[column] !== undefined) {
+                            row[column] = fixedDate;
+                            fixed++;
+                        }
+                    }
+                }
+                
+                // Corrigir concludentes (remover caracteres não numéricos)
+                const concludentesField = getMappedValue(row, 'concludentes');
+                if (concludentesField && isNaN(parseInt(concludentesField))) {
+                    const fixedNumber = String(concludentesField).replace(/\D/g, '');
+                    if (fixedNumber) {
+                        const column = getMappedColumn('concludentes');
+                        if (column && row[column] !== undefined) {
+                            row[column] = fixedNumber;
+                            fixed++;
+                        }
+                    }
+                }
+            });
+            
+            if (fixed > 0) {
+                // Revalidar após correções
+                revalidateData();
+                showToast(`${fixed} erro(s) corrigido(s) automaticamente!`, 'success');
+            } else {
+                showToast('Nenhum erro comum encontrado para corrigir automaticamente', 'info');
+            }
+        }
+        
+        function tryFixDate(dateString) {
+            if (!dateString) return null;
+            
+            // Tentar vários formatos comuns
+            const formats = [
+                /(\d{2})\/(\d{2})\/(\d{4})/, // DD/MM/YYYY
+                /(\d{2})-(\d{2})-(\d{4})/,   // DD-MM-YYYY
+                /(\d{4})-(\d{2})-(\d{2})/,   // YYYY-MM-DD
+                /(\d{2})\/(\d{2})\/(\d{2})/, // DD/MM/YY
+            ];
+            
+            for (const format of formats) {
+                const match = String(dateString).match(format);
+                if (match) {
+                    let day, month, year;
+                    if (format === /(\d{4})-(\d{2})-(\d{2})/) {
+                        year = match[1];
+                        month = match[2];
+                        day = match[3];
+                    } else {
+                        day = match[1];
+                        month = match[2];
+                        year = match[3];
+                        if (year.length === 2) {
+                            year = '20' + year;
+                        }
+                    }
+                    
+                    const date = new Date(`${year}-${month}-${day}`);
+                    if (!isNaN(date.getTime())) {
+                        return date.toISOString().split('T')[0];
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function getMappedColumn(field) {
+            for (const [column, mappedField] of Object.entries(excelColumnMapping)) {
+                if (mappedField === field) {
+                    return column;
+                }
+            }
+            return null;
+        }
+        
+        // Atualizar célula editada na tabela de preview
+        function updatePreviewCell(rowIndex, columnName, newValue) {
+            if (!previewData || !previewData[rowIndex]) return;
+            
+            // Atualizar o valor no previewData
+            previewData[rowIndex][columnName] = newValue.trim();
+            
+            // Revalidar após edição
+            const isValid = validateExcelData(previewData);
+            
+            // Atualizar exibição de erros
+            showValidationErrors();
+            
+            // Mostrar feedback visual
+            const cell = document.querySelector(`.preview-row[data-index="${rowIndex}"] td[data-column="${escapeHtmlAttribute(columnName)}"]`);
+            if (cell) {
+                cell.style.background = 'rgba(16, 185, 129, 0.2)';
+                setTimeout(() => {
+                    cell.style.background = '';
+                }, 1000);
+            }
+        }
+        
+        // Adicionar animação de pulse para CSS
+        if (!document.getElementById('errorPulseAnimation')) {
+            const style = document.createElement('style');
+            style.id = 'errorPulseAnimation';
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+                .preview-row.has-error {
+                    transition: all 0.3s ease;
+                }
+                .preview-row.has-error:hover {
+                    background: rgba(239, 68, 68, 0.2) !important;
+                }
+                .preview-table td[contenteditable="true"] {
+                    cursor: text;
+                    transition: background 0.2s ease;
+                }
+                .preview-table td[contenteditable="true"]:hover {
+                    background: rgba(99, 102, 241, 0.1);
+                }
+                .preview-table td[contenteditable="true"]:focus {
+                    background: rgba(99, 102, 241, 0.15);
+                    outline: 2px solid var(--primary);
+                    outline-offset: -2px;
+                }
+            `;
+            document.head.appendChild(style);
         }
         
         function showImportProgress() {
