@@ -19,12 +19,6 @@
     <title>CSF + Qualificação e Renda</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
-    <!-- Design System CSS -->
-    <link rel="stylesheet" href="css/design-system.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/themes.css">
-    
     <!-- Adicionando SheetJS para leitura de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Adicionando Chart.js para gráfico pizza -->
@@ -42,6 +36,10 @@
             --sidebar: #020617;
             --surface: #1e293b;
             --surface-hover: #334155;
+            --card: #1e293b;
+            --card-hover: #273549;
+            --card-border: #334155;
+            --card-shadow: rgba(0, 0, 0, 0.2);
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
@@ -51,8 +49,28 @@
             --text-muted: #64748b;
             --border: #334155;
             --overlay: rgba(0, 0, 0, 0.7);
-            --card: #1e293b;
             --transition-speed: 0.3s;
+            
+            /* Design System - Espaçamentos */
+            --spacing-xs: 0.25rem;   /* 4px */
+            --spacing-sm: 0.5rem;    /* 8px */
+            --spacing-md: 1rem;      /* 16px */
+            --spacing-lg: 1.5rem;    /* 24px */
+            --spacing-xl: 2rem;      /* 32px */
+            --spacing-2xl: 3rem;     /* 48px */
+            
+            /* Design System - Bordas */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 20px;
+            
+            /* Design System - Sombras */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
         /* Transição suave para temas */
@@ -63,17 +81,59 @@
                         box-shadow var(--transition-speed) ease;
         }
 
+        /* ==================== ACESSIBILIDADE - FOCO VISÍVEL ==================== */
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Skip to content link para acessibilidade */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 10000;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-to-content:focus {
+            top: 0;
+        }
+
         /* Modo Claro */
         :root.light-mode {
             --background: #f8fafc;
             --sidebar: #ffffff;
             --surface: #ffffff;
             --surface-hover: #f1f5f9;
+            --card: #ffffff;
+            --card-hover: #f8fafc;
+            --card-border: #e2e8f0;
+            --card-shadow: rgba(0, 0, 0, 0.05);
             --text-primary: #0f172a;
             --text-secondary: #475569;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --card: #ffffff;
             --overlay: rgba(0, 0, 0, 0.5);
         }
         
@@ -398,6 +458,23 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
+
+        /* Highlight do texto pesquisado */
+        .search-highlight {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .search-results-header {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            background: var(--surface-hover);
+        }
         
         .search-no-results {
             padding: 2rem;
@@ -505,6 +582,49 @@
         .theme-color-btn.orange { background: #f97316; }
         .theme-color-btn.cyan { background: #06b6d4; }
         
+        /* ==================== DASHBOARD FILTERS ==================== */
+        .dashboard-filters-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-filter-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .dashboard-filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-period-btn {
+            transition: all 0.2s ease;
+        }
+
+        .dashboard-period-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .dashboard-ctas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .dashboard-ctas .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
         /* ==================== DASHBOARD CHARTS ==================== */
         .dashboard-charts {
             display: grid;
@@ -514,15 +634,18 @@
         }
         
         .chart-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
             transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
         }
         
         .chart-card:hover {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+            transform: translateY(-2px);
         }
         
         .chart-header {
@@ -548,11 +671,12 @@
         
         /* ==================== DASHBOARD TIMELINE ==================== */
         .dashboard-timeline {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
         }
         
         .timeline-header {
@@ -683,16 +807,12 @@
         .compact-mode .course-card .course-title {
             font-size: 0.9rem !important;
         }
-        .compact-mode .course-card .course-id {
-            font-size: 0.75rem !important;
-        }
         .compact-mode .course-card .course-info {
             gap: 0.25rem !important;
         }
         .compact-mode .course-card .course-info-item {
             font-size: 0.75rem !important;
             padding: 0.15rem 0 !important;
-            line-height: 1.3 !important;
         }
         .compact-mode .course-card .course-info-item .material-icons {
             font-size: 14px !important;
@@ -711,62 +831,12 @@
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
             gap: 0.75rem !important;
         }
-        /* Anotações visíveis no modo compacto - apenas menores */
         .compact-mode .course-note {
-            display: flex !important;
-            padding: 6px 10px !important;
-            margin-top: 8px !important;
-            font-size: 0.75rem !important;
-            gap: 6px !important;
-        }
-        .compact-mode .course-note .material-icons {
-            font-size: 14px !important;
-        }
-        .compact-mode .course-note-text {
-            font-size: 0.75rem !important;
-            line-height: 1.3 !important;
+            display: none;
         }
         .compact-mode .course-alert {
             padding: 0.5rem !important;
             font-size: 0.75rem !important;
-            display: block !important;
-            visibility: visible !important;
-        }
-        /* Garantir que todos os elementos do card sejam visíveis no modo compacto */
-        .compact-mode .course-card .course-header {
-            display: flex !important;
-            visibility: visible !important;
-        }
-        .compact-mode .course-card .course-info {
-            display: flex !important;
-            visibility: visible !important;
-            flex-direction: column !important;
-        }
-        .compact-mode .course-card .course-card-body {
-            display: flex !important;
-            visibility: visible !important;
-            flex-direction: column !important;
-        }
-        .compact-mode .course-card .course-id {
-            display: block !important;
-            visibility: visible !important;
-        }
-        .compact-mode .course-card .status-badge {
-            display: inline-flex !important;
-            visibility: visible !important;
-        }
-        .compact-mode .course-card .course-actions {
-            display: flex !important;
-            visibility: visible !important;
-        }
-        .compact-mode .course-card .course-info-item {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        /* Garantir que todos os campos sejam visíveis */
-        .compact-mode .course-card .course-info-item {
-            display: flex !important;
         }
 
         /* Botão toggle modo compacto */
@@ -2126,6 +2196,39 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
+        /* Botão Ghost - estilo minimalista */
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-hover);
+            border-color: var(--border);
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost:active {
+            background: var(--surface);
+        }
+
+        /* Tamanhos de botões */
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-md {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+        }
+
         .btn-success {
             background: var(--success);
             color: white;
@@ -2167,10 +2270,11 @@
 
         /* Transformando KPI cards em cards interativos com animações */
         .kpi-card {
-            background: var(--surface);
-            border-radius: 20px;
-            padding: 1.75rem;
-            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-sm);
             position: relative;
             overflow: hidden;
             cursor: pointer;
@@ -2194,9 +2298,10 @@
         }
 
         .kpi-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: var(--shadow-lg);
             border-color: var(--primary);
+            background: var(--card-hover);
         }
         
         /* Sparkline nos KPI Cards */
@@ -2470,16 +2575,18 @@
 
         /* Cards de cursos com animações mais interativas */
         .course-card {
-            background: var(--surface);
-            border-radius: 16px;
+            background: var(--card);
+            border-radius: var(--radius-xl);
             padding: 0;
-            border: 1px solid var(--border);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-sm);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            margin-bottom: var(--spacing-md);
         }
 
         .course-card::before {
@@ -2500,9 +2607,10 @@
         }
 
         .course-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: var(--shadow-lg);
             border-color: var(--primary);
+            background: var(--card-hover);
         }
         
         /* Micro-interações melhoradas */
@@ -2627,29 +2735,22 @@
             flex-shrink: 0;
         }
 
-        /* Estilo para anotação do curso no card - Melhorado para mais visibilidade */
+        /* Estilo para anotação do curso no card */
         .course-note {
-            background: rgba(99, 102, 241, 0.15);
+            background: rgba(99, 102, 241, 0.1);
             border-left: 3px solid var(--primary);
-            padding: 10px 14px;
-            margin-top: 12px;
-            border-radius: 0 8px 8px 0;
-            font-size: 0.875rem;
-            color: var(--text-primary);
+            padding: 6px 10px;
+            margin-top: 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
             display: flex;
             align-items: flex-start;
-            gap: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-        }
-
-        .course-note:hover {
-            background: rgba(99, 102, 241, 0.2);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            gap: 6px;
         }
 
         .course-note .material-icons {
-            font-size: 18px;
+            font-size: 14px;
             color: var(--primary);
             flex-shrink: 0;
             margin-top: 2px;
@@ -2657,19 +2758,7 @@
 
         .course-note-text {
             word-break: break-word;
-            line-height: 1.5;
-            flex: 1;
-            color: var(--text-primary);
-            font-weight: 400;
-        }
-
-        /* Modo claro */
-        :root.light-mode .course-note {
-            background: rgba(99, 102, 241, 0.08);
-        }
-
-        :root.light-mode .course-note:hover {
-            background: rgba(99, 102, 241, 0.12);
+            line-height: 1.4;
         }
         
         /* Alertas nos cards */
@@ -3126,6 +3215,61 @@
             justify-content: flex-end;
             padding: 1.5rem;
             border-top: 1px solid var(--border);
+        }
+
+        /* Modal de Confirmação */
+        .confirm-modal {
+            max-width: 450px;
+        }
+
+        .confirm-modal .modal-body {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .confirm-modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 32px;
+        }
+
+        .confirm-modal-icon.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .confirm-modal-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .confirm-modal-icon.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        .confirm-modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .confirm-modal-message {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .confirm-modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
         }
 
         /* Forms */
@@ -6625,7 +6769,7 @@
             }
 
             /* Dark mode toggle mobile */
-            #themeToggle {
+            /* #themeToggle removido */
                 padding: 0.4rem;
             }
         }
@@ -9183,22 +9327,53 @@
             
             <!-- Aviso de dados não salvos -->
             <!-- Toggle de Tema -->
-            <button class="theme-toggle" id="themeToggle" title="Alternar tema">
-                <span class="material-icons" id="themeIcon">dark_mode</span>
-            </button>
+            <!-- Modal de Confirmação -->
+            <div class="modal-overlay" id="confirmModal">
+                <div class="modal confirm-modal">
+                    <div class="modal-body">
+                        <div class="confirm-modal-icon" id="confirmModalIcon">
+                            <span class="material-icons">warning</span>
+                        </div>
+                        <h3 class="confirm-modal-title" id="confirmModalTitle">Confirmar ação</h3>
+                        <p class="confirm-modal-message" id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+                        <div class="confirm-modal-footer">
+                            <button class="btn btn-secondary" id="confirmModalCancel">Cancelar</button>
+                            <button class="btn btn-primary" id="confirmModalConfirm">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal de Eventos do Dia -->
+            <div class="modal-overlay" id="dayEventsModal" style="display: none;">
+                <div class="modal" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2 id="dayEventsModalTitle">Eventos do Dia</h2>
+                        <button class="modal-close" onclick="closeDayEventsModal()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="dayEventsModalBody">
+                        <!-- Eventos serão renderizados aqui -->
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" onclick="closeDayEventsModal()">Fechar</button>
+                    </div>
+                </div>
+            </div>
             
             <!-- Dashboard Page -->
             <section class="page-section active" id="dashboardPage">
                 <div class="header">
-                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu de navegação">
                         <span class="material-icons">menu</span>
                     </button>
-                    <div class="header-search-hint desktop-only" onclick="openGlobalSearch()" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 0.9rem;">
+                    <div class="header-search-hint desktop-only" onclick="openGlobalSearch()" role="button" tabindex="0" aria-label="Abrir pesquisa global (Ctrl+K)" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 0.9rem;">
                         <span class="material-icons" style="font-size: 18px;">search</span>
                         Buscar...
                         <span style="margin-left: auto; padding: 2px 6px; background: var(--surface-hover); border-radius: 4px; font-size: 0.7rem;">Ctrl+K</span>
                     </div>
-                    <button class="mobile-search-btn mobile-only" onclick="openGlobalSearch()">
+                    <button class="mobile-search-btn mobile-only" onclick="openGlobalSearch()" aria-label="Abrir pesquisa">
                         <span class="material-icons">search</span>
                     </button>
                 </div>
@@ -9260,12 +9435,49 @@
                     </div>
                 </div>
                 
+                <!-- Filtros de Período no Dashboard -->
+                <div class="dashboard-filters animate-in" style="animation-delay: 0.25s; margin-bottom: 1.5rem;">
+                    <div class="dashboard-filters-container">
+                        <label class="dashboard-filter-label">Período:</label>
+                        <div class="dashboard-filter-buttons">
+                            <button class="btn btn-ghost btn-sm dashboard-period-btn active" data-period="7" onclick="setDashboardPeriod(7)">
+                                7 dias
+                            </button>
+                            <button class="btn btn-ghost btn-sm dashboard-period-btn" data-period="30" onclick="setDashboardPeriod(30)">
+                                30 dias
+                            </button>
+                            <button class="btn btn-ghost btn-sm dashboard-period-btn" data-period="180" onclick="setDashboardPeriod(180)">
+                                6 meses
+                            </button>
+                            <button class="btn btn-ghost btn-sm dashboard-period-btn" data-period="all" onclick="setDashboardPeriod('all')">
+                                Todos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTAs do Dashboard -->
+                <div class="dashboard-ctas animate-in" style="animation-delay: 0.27s; margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <button class="btn btn-primary" onclick="navigateTo('courses'); document.getElementById('newCourseBtn')?.click();" aria-label="Cadastrar novo curso">
+                        <span class="material-icons">add</span>
+                        Cadastrar Curso
+                    </button>
+                    <button class="btn btn-secondary" onclick="navigateTo('courses')" aria-label="Ver todos os cursos">
+                        <span class="material-icons">list</span>
+                        Ver Todos
+                    </button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('downloadReportBtn')?.click();" aria-label="Gerar relatório">
+                        <span class="material-icons">description</span>
+                        Gerar Relatório
+                    </button>
+                </div>
+                
                 <!-- Dashboard Charts -->
                 <div class="dashboard-charts">
                     <div class="chart-card animate-in" style="animation-delay: 0.3s;">
                         <div class="chart-header">
                             <h3>Cursos por Mês</h3>
-                            <span class="chart-subtitle">Últimos 6 meses</span>
+                            <span class="chart-subtitle" id="chartPeriodSubtitle">Últimos 6 meses</span>
                         </div>
                         <div class="chart-container">
                             <canvas id="coursesTimelineChart"></canvas>
@@ -9455,20 +9667,24 @@
                     <div class="calendar-legend">
                         <div class="legend-title">Legenda:</div>
                         <div class="legend-item">
-                            <span class="legend-color" style="background: var(--success);"></span>
+                            <span class="legend-color" style="background: var(--primary);"></span>
                             <span>Início do curso</span>
                         </div>
                         <div class="legend-item">
-                            <span class="legend-color" style="background: var(--danger);"></span>
+                            <span class="legend-color" style="background: var(--success);"></span>
                             <span>Fim do curso</span>
                         </div>
                         <div class="legend-item">
-                            <span class="legend-color" style="background: var(--primary);"></span>
-                            <span>Em andamento</span>
+                            <span class="legend-color" style="background: var(--danger);"></span>
+                            <span>Atrasado</span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-color" style="background: var(--warning);"></span>
-                            <span>Feriado</span>
+                            <span>Tarefa</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: var(--info);"></span>
+                            <span>Evento</span>
                         </div>
                     </div>
                 </div>
@@ -10965,6 +11181,7 @@
             initThemeSelector(); // Seletor de cores
             initTouchGestures(); // Gestos touch para mobile
             initCourseExpiryNotifications(); // Notificações de vencimento
+            initDashboardLazyLoad(); // Lazy load do dashboard
             // Carregar nome do projeto ao inicializar
             loadProjectName();
             updateLastBackupInfo(); // Info do último backup
@@ -11818,6 +12035,9 @@
                 
                 // Carregar tarefas do usuário em tempo real
                 setupTasksListener();
+                
+                // Carregar cursos em tempo real (para atualizar calendário automaticamente)
+                setupCoursesListener();
             } else {
                 loadFromLocalStorage();
             }
@@ -12028,7 +12248,7 @@
                             ${canEdit ? `
                                 <div class="course-actions" onclick="event.stopPropagation()">
                                     ${course.driveLink ? `
-                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Instrumentais">
+                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Arquivos Instrumentais">
                                             <span class="material-icons">folder</span>
                                         </button>
                                     ` : ''}
@@ -12047,7 +12267,7 @@
                             ` : `
                                 <div class="course-actions" onclick="event.stopPropagation()">
                                     ${course.driveLink ? `
-                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Instrumentais">
+                                        <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Arquivos Instrumentais">
                                             <span class="material-icons">folder</span>
                                         </button>
                                     ` : ''}
@@ -12060,57 +12280,11 @@
                             `}
                         </div>
                         <div class="course-info">
-                            ${(() => {
-                                // Usar campos dinâmicos se disponível, senão usar campos fixos
-                                if (typeof window.renderCardFields === 'function') {
-                                    return window.renderCardFields(course);
-                                }
-                                // Fallback para campos fixos
-                                return `
-                                    <div class="course-info-item">
-                                        <span class="material-icons">location_on</span>
-                                        ${course.cidade || 'Local não definido'}${course.local ? ' - ' + course.local : ''}
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">event</span>
-                                        <span>Período: ${course.inicio && course.fim ? formatDate(course.inicio) + ' - ' + formatDate(course.fim) : course.inicio ? formatDate(course.inicio) : course.fim ? formatDate(course.fim) : 'Não informado'}</span>
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">person</span>
-                                        ${course.instrutor || 'Instrutor não definido'}
-                                        ${(() => {
-                                            const inst = instrutores.find(i => i.nome === course.instrutor);
-                                            if (inst && inst.telefone) {
-                                                const phone = inst.telefone.replace(/\D/g, '');
-                                                return `<button class="btn-whatsapp-mini" onclick="event.stopPropagation(); openWhatsApp('${phone}')" title="WhatsApp"><span class="material-icons">chat</span></button>`;
-                                            }
-                                            return '';
-                                        })()}
-                                    </div>
-                                    <div class="course-info-item">
-                                        <span class="material-icons">groups</span>
-                                        ${course.alunos || 0} concludentes
-                                    </div>
-                                    ${course.telefone ? `
-                                    <div class="course-info-item">
-                                        <span class="material-icons">phone</span>
-                                        ${course.telefone}
-                                        <button class="btn-whatsapp-mini" onclick="event.stopPropagation(); openWhatsApp('${course.telefone.replace(/\D/g, '')}')" title="WhatsApp"><span class="material-icons">chat</span></button>
-                                    </div>
-                                    ` : ''}
-                                `;
-                            })()}
+                            ${renderCardFields(course)}
                             <div>
                                 <span class="status-badge ${statusClass}">${normalizeStatus(course.status)}</span>
                             </div>
                         </div>
-                        <!-- Exibição da anotação no card - Sempre visível quando houver -->
-                        ${course.nota ? `
-                            <div class="course-note">
-                                <span class="material-icons">sticky_note_2</span>
-                                <span class="course-note-text">${course.nota}</span>
-                            </div>
-                        ` : ''}
                         ${renderCourseAlerts(alerts, course.id)}
                     </div>
                 `;
@@ -13185,6 +13359,40 @@ _Compartilhado via Sistema CSF_`;
             });
         }
         
+        // Listener para cursos - ATUALIZAÇÃO EM TEMPO REAL NO CALENDÁRIO
+        let coursesListener = null;
+        function setupCoursesListener() {
+            if (coursesListener) {
+                coursesListener(); // Cancelar listener anterior
+            }
+            
+            if (!firebaseAvailable) {
+                return;
+            }
+            
+            coursesListener = db.collection('cursos').onSnapshot(snapshot => {
+                const updatedCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Atualizar apenas se houver mudanças
+                const hasChanges = JSON.stringify(updatedCourses) !== JSON.stringify(cursos);
+                if (hasChanges) {
+                    cursos = updatedCourses;
+                    
+                    // Se o calendário estiver ativo, atualizar
+                    if (document.getElementById('calendarPage')?.classList.contains('active')) {
+                        renderCalendar();
+                    }
+                    
+                    // Se a página de cursos estiver ativa, atualizar
+                    if (document.getElementById('coursesPage')?.classList.contains('active')) {
+                        renderCoursesByLote();
+                    }
+                }
+            }, error => {
+                safeError('Erro ao carregar cursos em tempo real:', error);
+            });
+        }
+        
         // Listener para tarefas do usuário
         function setupTasksListener() {
             if (tasksListener) {
@@ -13309,25 +13517,430 @@ _Compartilhado via Sistema CSF_`;
             }
         }
         
+        // ==================== FILTROS DO CALENDÁRIO ====================
+        let calendarFilters = {
+            curso: '',
+            instrutor: '',
+            status: ''
+        };
+        
+        function applyCalendarFilters() {
+            renderCalendar();
+        }
+        
+        function resetCalendarFilters() {
+            calendarFilters = {
+                curso: '',
+                instrutor: '',
+                status: ''
+            };
+            
+            // Resetar selects
+            const cursoFilter = document.getElementById('calendarFilterCurso');
+            const instrutorFilter = document.getElementById('calendarFilterInstrutor');
+            const statusFilter = document.getElementById('calendarFilterStatus');
+            
+            if (cursoFilter) cursoFilter.value = '';
+            if (instrutorFilter) instrutorFilter.value = '';
+            if (statusFilter) statusFilter.value = '';
+            
+            renderCalendar();
+        }
+        
+        function getFilteredCourses() {
+            let filtered = [...cursos];
+            
+            if (calendarFilters.curso) {
+                filtered = filtered.filter(c => 
+                    c.curso && c.curso.toLowerCase().includes(calendarFilters.curso.toLowerCase())
+                );
+            }
+            
+            if (calendarFilters.instrutor) {
+                filtered = filtered.filter(c => 
+                    c.instrutor && c.instrutor.toLowerCase().includes(calendarFilters.instrutor.toLowerCase())
+                );
+            }
+            
+            if (calendarFilters.status) {
+                filtered = filtered.filter(c => 
+                    normalizeStatus(c.status) === calendarFilters.status
+                );
+            }
+            
+            return filtered;
+        }
+        
+        function getEventColor(eventType, status) {
+            const colorMap = {
+                'curso-inicio': 'var(--primary)',
+                'curso-fim': 'var(--success)',
+                'curso-atrasado': 'var(--danger)',
+                'tarefa': 'var(--warning)',
+                'tarefa-atrasada': 'var(--danger)',
+                'evento': 'var(--info)',
+                'lembrete': 'var(--warning)'
+            };
+            
+            if (eventType === 'curso') {
+                if (status === 'Atrasado' || status === 'Pendente') {
+                    return colorMap['curso-atrasado'];
+                }
+            }
+            
+            return colorMap[eventType] || 'var(--text-muted)';
+        }
+        
+        // ==================== MENU DE CONTEXTO DO CALENDÁRIO ====================
+        let calendarContextMenuData = {
+            type: null,
+            id: null,
+            date: null
+        };
+        
+        function showCalendarContextMenu(event, type, id, date) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            calendarContextMenuData = { type, id, date };
+            
+            const menu = document.getElementById('calendarContextMenu');
+            if (!menu) return;
+            
+            menu.style.display = 'block';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            
+            // Fechar ao clicar fora
+            setTimeout(() => {
+                document.addEventListener('click', closeCalendarContextMenu, { once: true });
+            }, 100);
+        }
+        
+        function closeCalendarContextMenu() {
+            const menu = document.getElementById('calendarContextMenu');
+            if (menu) menu.style.display = 'none';
+        }
+        
+        async function contextMenuEdit() {
+            closeCalendarContextMenu();
+            if (calendarContextMenuData.type === 'curso') {
+                openCourseModal(calendarContextMenuData.id);
+            } else if (calendarContextMenuData.type === 'event') {
+                showEventDetails(calendarContextMenuData.id);
+            }
+        }
+        
+        async function contextMenuMove() {
+            closeCalendarContextMenu();
+            const newDate = prompt('Digite a nova data (YYYY-MM-DD):');
+            if (!newDate) return;
+            
+            if (calendarContextMenuData.type === 'curso') {
+                const course = cursos.find(c => c.id === calendarContextMenuData.id);
+                if (course) {
+                    const oldData = { ...course };
+                    if (calendarContextMenuData.date === course.inicio) {
+                        course.inicio = newDate;
+                    } else if (calendarContextMenuData.date === course.fim) {
+                        course.fim = newDate;
+                    }
+                    
+                    await saveCourse(course);
+                    await addAuditLog('update', 'course', course.id, 
+                        `Data do curso movida de ${calendarContextMenuData.date} para ${newDate}`, oldData, course);
+                    renderCalendar();
+                }
+            }
+        }
+        
+        function contextMenuDuplicate() {
+            closeCalendarContextMenu();
+            if (calendarContextMenuData.type === 'curso') {
+                const course = cursos.find(c => c.id === calendarContextMenuData.id);
+                if (course) {
+                    const newCourse = { ...course };
+                    delete newCourse.id;
+                    newCourse.curso = newCourse.curso + ' (Cópia)';
+                    newCourse.createdAt = new Date().toISOString();
+                    openCourseModal(null, newCourse);
+                }
+            }
+        }
+        
+        function contextMenuDetails() {
+            closeCalendarContextMenu();
+            if (calendarContextMenuData.type === 'curso') {
+                openViewCourseModal(calendarContextMenuData.id);
+            } else if (calendarContextMenuData.type === 'event') {
+                showEventDetails(calendarContextMenuData.id);
+            }
+        }
+        
+        async function contextMenuDelete() {
+            closeCalendarContextMenu();
+            const confirmed = await showConfirmModal({
+                type: 'danger',
+                title: 'Excluir evento',
+                message: 'Tem certeza que deseja excluir este evento?',
+                confirmText: 'Excluir',
+                confirmBtnClass: 'btn-danger'
+            });
+            
+            if (!confirmed) return;
+            
+            if (calendarContextMenuData.type === 'curso') {
+                await deleteCourse(calendarContextMenuData.id);
+            } else if (calendarContextMenuData.type === 'event') {
+                await deleteCalendarEvent(calendarContextMenuData.id);
+            }
+            
+            renderCalendar();
+        }
+        
+        // ==================== DRAG & DROP NO CALENDÁRIO ====================
+        let draggedEvent = null;
+        
+        function handleCalendarDragStart(event, type, id, date) {
+            draggedEvent = { type, id, date };
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', '');
+            event.target.style.opacity = '0.5';
+        }
+        
+        function handleCalendarDragEnd(event) {
+            event.target.style.opacity = '1';
+            draggedEvent = null;
+        }
+        
+        function handleCalendarDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            
+            const dayElement = event.target.closest('.calendar-day:not(.other-month)');
+            if (dayElement) {
+                dayElement.style.backgroundColor = 'var(--primary-light)';
+            }
+        }
+        
+        function handleCalendarDragLeave(event) {
+            const dayElement = event.target.closest('.calendar-day');
+            if (dayElement) {
+                dayElement.style.backgroundColor = '';
+            }
+        }
+        
+        async function handleCalendarDrop(event) {
+            event.preventDefault();
+            
+            // Procurar pelo elemento do dia em diferentes visualizações
+            let dayElement = event.target.closest('.calendar-day:not(.other-month)');
+            if (!dayElement) {
+                // Tentar encontrar na visualização de semana
+                dayElement = event.target.closest('.week-view-day');
+            }
+            if (!dayElement) {
+                // Tentar encontrar na visualização diária
+                dayElement = event.target.closest('.day-view-container');
+            }
+            
+            if (!dayElement || !draggedEvent) {
+                draggedEvent = null;
+                return;
+            }
+            
+            // Remover highlight
+            if (dayElement.style) {
+                dayElement.style.backgroundColor = '';
+            }
+            
+            // Tentar obter data do atributo data-date ou do elemento
+            let dateStr = dayElement.dataset.date;
+            if (!dateStr) {
+                // Tentar extrair da estrutura do calendário
+                const dateElement = dayElement.querySelector('.calendar-date');
+                if (dateElement) {
+                    const day = parseInt(dateElement.textContent);
+                    const year = currentMonth.getFullYear();
+                    const month = currentMonth.getMonth();
+                    const date = new Date(year, month, day);
+                    dateStr = date.toISOString().split('T')[0];
+                } else {
+                    // Para visualização diária, usar a data atual do currentMonth
+                    dateStr = currentMonth.toISOString().split('T')[0];
+                }
+            }
+            
+            if (!dateStr) {
+                draggedEvent = null;
+                return;
+            }
+            
+            const confirmed = await showConfirmModal({
+                type: 'info',
+                title: 'Mover evento',
+                message: `Deseja mover este evento para ${formatDateBR(dateStr)}?`,
+                confirmText: 'Mover',
+                cancelText: 'Cancelar'
+            });
+            
+            if (!confirmed) {
+                draggedEvent = null;
+                return;
+            }
+            
+            if (draggedEvent.type === 'curso') {
+                const course = cursos.find(c => c.id === draggedEvent.id);
+                if (course) {
+                    const oldData = { ...course };
+                    if (draggedEvent.date === course.inicio) {
+                        course.inicio = dateStr;
+                    } else if (draggedEvent.date === course.fim) {
+                        course.fim = dateStr;
+                    }
+                    
+                    // Salvar imediatamente no Firebase
+                    if (firebaseAvailable) {
+                        await db.collection('cursos').doc(course.id).update({
+                            inicio: course.inicio,
+                            fim: course.fim,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        // Salvar no localStorage
+                        const existingCourses = JSON.parse(localStorage.getItem('cursos') || '[]');
+                        const index = existingCourses.findIndex(c => c.id === course.id);
+                        if (index !== -1) {
+                            existingCourses[index] = course;
+                            localStorage.setItem('cursos', JSON.stringify(existingCourses));
+                        }
+                        cursos = existingCourses;
+                    }
+                    
+                    await addAuditLog('update', 'course', course.id, 
+                        `Evento do curso movido de ${draggedEvent.date} para ${dateStr} via drag & drop`, oldData, course);
+                    
+                    // Atualizar imediatamente sem precisar recarregar
+                    renderCalendar();
+                    showToast('Curso movido com sucesso!', 'success', { duration: 2000 });
+                }
+            } else if (draggedEvent.type === 'event') {
+                // Mover evento personalizado
+                const event = calendarEvents.find(e => e.id === draggedEvent.id);
+                if (event) {
+                    const oldData = { ...event };
+                    event.date = dateStr;
+                    
+                    if (firebaseAvailable) {
+                        await db.collection('calendarEvents').doc(event.id).update({
+                            date: dateStr,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        const existingEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
+                        const index = existingEvents.findIndex(e => e.id === event.id);
+                        if (index !== -1) {
+                            existingEvents[index] = { ...event };
+                            localStorage.setItem('calendarEvents', JSON.stringify(existingEvents));
+                        } else {
+                            // Se não encontrou, adicionar novo
+                            existingEvents.push({ ...event });
+                            localStorage.setItem('calendarEvents', JSON.stringify(existingEvents));
+                        }
+                        // Atualizar array global
+                        calendarEvents = existingEvents;
+                    }
+                    
+                    await addAuditLog('update', 'event', event.id, 
+                        `Evento movido de ${draggedEvent.date} para ${dateStr} via drag & drop`, oldData, event);
+                    
+                    renderCalendar();
+                    showToast('Evento movido com sucesso!', 'success', { duration: 2000 });
+                }
+            } else if (draggedEvent.type === 'tarefa') {
+                // Mover tarefa
+                const task = tasks.find(t => t.id === draggedEvent.id);
+                if (task) {
+                    const oldData = { ...task };
+                    task.dueDate = dateStr;
+                    
+                    const userId = currentUser?.id;
+                    if (firebaseAvailable && userId) {
+                        await db.collection('tasks').doc(task.id).update({
+                            dueDate: dateStr,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        const existingTasks = JSON.parse(localStorage.getItem(`tasks_${userId}`) || '[]');
+                        const index = existingTasks.findIndex(t => t.id === task.id);
+                        if (index !== -1) {
+                            existingTasks[index] = task;
+                            localStorage.setItem(`tasks_${userId}`, JSON.stringify(existingTasks));
+                        }
+                        tasks = existingTasks;
+                    }
+                    
+                    await addAuditLog('update', 'task', task.id, 
+                        `Tarefa movida de ${draggedEvent.date} para ${dateStr} via drag & drop`, oldData, task);
+                    
+                    renderCalendar();
+                    if (typeof renderTasks === 'function') renderTasks();
+                    showToast('Tarefa movida com sucesso!', 'success', { duration: 2000 });
+                }
+            }
+            
+            draggedEvent = null;
+        }
+        
+        // Adicionar event listeners de drag & drop aos dias do calendário
+        function setupCalendarDragAndDrop() {
+            document.addEventListener('dragover', handleCalendarDragOver);
+            document.addEventListener('dragleave', handleCalendarDragLeave);
+            document.addEventListener('drop', handleCalendarDrop);
+        }
+        
+        // Inicializar drag & drop quando o calendário for renderizado
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCalendarDragAndDrop();
+        });
+        
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             if (!grid) return;
             
+            // Scroll suave ao renderizar
+            grid.style.opacity = '0';
+            grid.style.transform = 'translateY(10px)';
+            
             // Renderizar baseado na visualização atual
             if (currentCalendarView === 'week') {
                 renderWeekView();
-                return;
             } else if (currentCalendarView === 'day') {
                 renderDayView();
-                return;
+            } else {
+                // Visualização mensal (padrão)
+                grid.className = 'calendar-grid';
+                renderMonthView();
             }
             
-            // Visualização mensal (padrão)
-            grid.className = 'calendar-grid';
+            // Animação de entrada
+            setTimeout(() => {
+                grid.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                grid.style.opacity = '1';
+                grid.style.transform = 'translateY(0)';
+            }, 50);
+        }
+        
+        function renderMonthView() {
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
             
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
             const holidays = getHolidays(year);
+            
+            // Usar cursos filtrados
+            const filteredCourses = getFilteredCourses();
 
             const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
                            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -13395,6 +14008,9 @@ _Compartilhado via Sistema CSF_`;
                 // Eventos personalizados do dia
                 const customEvents = calendarEvents.filter(e => e.date === dateStr);
                 
+                // Tarefas do dia
+                const dayTasksForDate = tasks.filter(t => t.dueDate === dateStr && !t.completed);
+                
                 // Contagem para estatísticas
                 events.forEach(c => {
                     if (c.inicio === dateStr) {
@@ -13404,37 +14020,73 @@ _Compartilhado via Sistema CSF_`;
                     if (c.fim === dateStr) coursesEnding++;
                 });
 
-                // HTML dos eventos de curso com preview
+                // HTML dos eventos de curso com preview, cores e drag & drop
                 let eventsHtml = events.slice(0, 3).map(c => {
                     const statusClass = 'status-' + getStatusClass(c.status);
                     const isStart = c.inicio === dateStr;
                     const isEnd = c.fim === dateStr;
                     const eventClass = isStart ? 'start' : 'end';
                     const label = isStart ? '▶ Início' : '■ Fim';
-                    return `<div class="calendar-event ${eventClass} ${statusClass}" 
+                    const eventColor = getEventColor('curso-' + (isStart ? 'inicio' : 'fim'), c.status);
+                    const isOverdue = isEnd && new Date(c.fim) < new Date() && normalizeStatus(c.status) !== 'Concluído';
+                    
+                    return `<div class="calendar-event ${eventClass} ${statusClass} ${isOverdue ? 'overdue' : ''}" 
                                 data-course-id="${c.id}"
+                                data-event-type="curso"
+                                data-event-date="${dateStr}"
+                                draggable="true"
                                 onmouseenter="showCoursePreview(event, '${c.id}')"
                                 onmouseleave="hideCoursePreview()"
                                 onclick="openCourseModal('${c.id}')"
+                                oncontextmenu="showCalendarContextMenu(event, 'curso', '${c.id}', '${dateStr}'); return false;"
+                                ondragstart="handleCalendarDragStart(event, 'curso', '${c.id}', '${dateStr}')"
+                                style="background: ${eventColor}; border-left: 3px solid ${eventColor};"
                                 title="${label}: ${c.curso}">
                                 <span class="event-label">${label}</span> ${c.curso || c.lote}
                             </div>`;
                 }).join('');
                 
-                // Eventos personalizados - ordenar por horário
+                // Eventos personalizados - ordenar por horário (com drag & drop)
                 const sortedCustomEvents = [...customEvents].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                 eventsHtml += sortedCustomEvents.slice(0, 1).map(e => {
                     const isOwner = currentUser?.id === e.createdBy;
                     const ownerLabel = isOwner ? '' : ` • ${e.createdByName || 'Anônimo'}`;
                     const timeLabel = e.time ? `${e.time} - ` : '';
-                    return `<div class="calendar-event custom-event" style="background: ${e.color};" 
+                    return `<div class="calendar-event custom-event" 
+                                style="background: ${e.color}; border-left: 3px solid ${e.color};"
+                                data-event-type="event"
+                                data-event-id="${e.id}"
+                                data-event-date="${dateStr}"
+                                draggable="true"
                                 onclick="showEventDetails('${e.id}')"
+                                oncontextmenu="showCalendarContextMenu(event, 'event', '${e.id}', '${dateStr}'); return false;"
+                                ondragstart="handleCalendarDragStart(event, 'event', '${e.id}', '${dateStr}')"
+                                ondragend="handleCalendarDragEnd(event)"
                                 title="${timeLabel}${e.title}${ownerLabel}">${e.time ? e.time + ' ' : ''}${e.title}</div>`;
                 }).join('');
+                
+                // Tarefas do dia (com drag & drop) - usar a variável já declarada acima
+                eventsHtml += dayTasksForDate.slice(0, 2).map(t => {
+                    const taskColor = getEventColor('tarefa', t.completed ? 'Concluído' : 'Pendente');
+                    const isOverdue = !t.completed && new Date(t.dueDate) < new Date();
+                    return `<div class="calendar-event tarefa-event ${isOverdue ? 'overdue' : ''}" 
+                                data-event-type="tarefa"
+                                data-event-id="${t.id}"
+                                data-event-date="${dateStr}"
+                                draggable="true"
+                                onclick="openTaskModal('${t.id}')"
+                                oncontextmenu="showCalendarContextMenu(event, 'tarefa', '${t.id}', '${dateStr}'); return false;"
+                                ondragstart="handleCalendarDragStart(event, 'tarefa', '${t.id}', '${dateStr}')"
+                                ondragend="handleCalendarDragEnd(event)"
+                                style="background: ${taskColor}; border-left: 3px solid ${taskColor};"
+                                title="${t.title}${t.dueTime ? ' às ' + t.dueTime : ''}">
+                                <span class="material-icons" style="font-size: 14px;">task_alt</span> ${t.title}
+                            </div>`;
+                }).join('');
 
-                const totalEvents = events.length + customEvents.length;
+                const totalEvents = events.length + customEvents.length + dayTasksForDate.length;
                 if (totalEvents > 3) {
-                    eventsHtml += `<div class="calendar-event more-events">+${totalEvents - 3} mais</div>`;
+                    eventsHtml += `<div class="calendar-event more-events" onclick="showDayEvents('${dateStr}')" style="cursor: pointer;" title="Clique para ver todos os eventos">+${totalEvents - 3} mais</div>`;
                 }
                 
                 // Indicador de quantidade
@@ -13446,6 +14098,7 @@ _Compartilhado via Sistema CSF_`;
                 html += `
                     <div class="calendar-day${isToday ? ' today' : ''}${isHoliday ? ' holiday' : ''}" 
                          data-date="${dateStr}"
+                         onclick="if(event.target.closest('.calendar-event') === null && event.target.closest('.add-event-btn') === null && ${totalEvents} > 0) { showDayEvents('${dateStr}'); }"
                          ondblclick="openAddEventModal('${dateStr}')">
                         <div class="calendar-date">${day}</div>
                         ${holidayHtml}
@@ -13649,6 +14302,177 @@ _Compartilhado via Sistema CSF_`;
                 showToast('Evento adicionado!', 'success');
             }
             closeModal('addEventModal');
+        }
+        
+        // ==================== MODAL DE EVENTOS DO DIA ====================
+        function showDayEvents(dateStr) {
+            const modal = document.getElementById('dayEventsModal');
+            const modalTitle = document.getElementById('dayEventsModalTitle');
+            const modalBody = document.getElementById('dayEventsModalBody');
+            
+            if (!modal || !modalTitle || !modalBody) return;
+            
+            // Formatar data
+            const date = new Date(dateStr);
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            const formattedDate = `${weekDays[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`;
+            
+            modalTitle.textContent = `Eventos de ${formattedDate}`;
+            
+            // Buscar todos os eventos do dia
+            const dayEvents = cursos.filter(c => (c.inicio === dateStr || c.fim === dateStr));
+            const dayCustomEvents = calendarEvents.filter(e => e.date === dateStr);
+            const dayTasks = tasks.filter(t => t.dueDate === dateStr && !t.completed);
+            
+            let html = '';
+            
+            // Verificar se há feriado
+            const holidays = getHolidays(date.getFullYear());
+            const holiday = holidays[dateStr];
+            if (holiday) {
+                html += `
+                    <div class="day-event-item holiday-item" style="background: var(--warning-light); border-left: 4px solid var(--warning); padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-icons" style="color: var(--warning);">celebration</span>
+                            <strong style="color: var(--warning-dark);">${holiday}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Cursos do dia
+            if (dayEvents.length > 0) {
+                html += `<div class="day-events-section">
+                    <h3 style="margin: 0 0 1rem 0; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons">school</span>
+                        Cursos (${dayEvents.length})
+                    </h3>`;
+                
+                dayEvents.forEach(c => {
+                    const isStart = c.inicio === dateStr;
+                    const isEnd = c.fim === dateStr;
+                    const eventType = isStart ? 'Início' : 'Fim';
+                    const eventColor = getEventColor('curso-' + (isStart ? 'inicio' : 'fim'), c.status);
+                    const statusClass = getStatusClass(c.status);
+                    
+                    html += `
+                        <div class="day-event-item" style="border-left: 4px solid ${eventColor}; padding: 1rem; margin-bottom: 1rem; background: var(--surface); border-radius: 8px; cursor: pointer;" onclick="openCourseModal('${c.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                        <span class="material-icons" style="font-size: 18px; color: ${eventColor};">${isStart ? 'play_arrow' : 'stop'}</span>
+                                        <strong style="color: var(--text);">${eventType} do Curso</strong>
+                                    </div>
+                                    <h4 style="margin: 0; color: var(--text);">${c.curso || c.lote}</h4>
+                                </div>
+                                <span class="status-badge ${statusClass}" style="font-size: 0.85rem;">${normalizeStatus(c.status)}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);">
+                                ${c.instrutor ? `<div style="display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 16px;">person</span> ${c.instrutor}</div>` : ''}
+                                ${c.cidade || c.local ? `<div style="display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 16px;">location_on</span> ${c.local || c.cidade}</div>` : ''}
+                                ${c.alunos ? `<div style="display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 16px;">groups</span> ${c.alunos} alunos</div>` : ''}
+                                ${c.cargaHoraria ? `<div style="display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 16px;">schedule</span> ${c.cargaHoraria}h</div>` : ''}
+                            </div>
+                            ${c.nota ? `<div style="margin-top: 0.75rem; padding: 0.5rem; background: var(--surface-hover); border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(c.nota)}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Eventos personalizados do dia
+            if (dayCustomEvents.length > 0) {
+                html += `<div class="day-events-section" style="margin-top: 1.5rem;">
+                    <h3 style="margin: 0 0 1rem 0; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons">event</span>
+                        Eventos Personalizados (${dayCustomEvents.length})
+                    </h3>`;
+                
+                const sortedEvents = [...dayCustomEvents].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                sortedEvents.forEach(e => {
+                    const isOwner = currentUser?.id === e.createdBy;
+                    html += `
+                        <div class="day-event-item" style="border-left: 4px solid ${e.color}; padding: 1rem; margin-bottom: 1rem; background: var(--surface); border-radius: 8px; cursor: pointer;" onclick="showEventDetails('${e.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    ${e.time ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">schedule</span> ${e.time}</div>` : ''}
+                                    <h4 style="margin: 0; color: var(--text);">${e.title}</h4>
+                                    ${e.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(e.description)}</p>` : ''}
+                                </div>
+                            </div>
+                            ${!isOwner ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Criado por: ${e.createdByName || 'Anônimo'}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Tarefas do dia
+            if (dayTasks.length > 0) {
+                html += `<div class="day-events-section" style="margin-top: 1.5rem;">
+                    <h3 style="margin: 0 0 1rem 0; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons">task_alt</span>
+                        Tarefas (${dayTasks.length})
+                    </h3>`;
+                
+                dayTasks.forEach(t => {
+                    const taskColor = getEventColor('tarefa', t.completed ? 'Concluído' : 'Pendente');
+                    const isOverdue = !t.completed && new Date(t.dueDate) < new Date();
+                    
+                    html += `
+                        <div class="day-event-item" style="border-left: 4px solid ${taskColor}; padding: 1rem; margin-bottom: 1rem; background: var(--surface); border-radius: 8px; cursor: pointer;" onclick="openTaskModal('${t.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    ${t.dueTime ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">schedule</span> ${t.dueTime}</div>` : ''}
+                                    <h4 style="margin: 0; color: var(--text);">${t.title}</h4>
+                                    ${t.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(t.description)}</p>` : ''}
+                                </div>
+                                ${isOverdue ? `<span style="color: var(--danger); font-size: 0.85rem;">Atrasada</span>` : ''}
+                            </div>
+                            ${t.priority ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Prioridade: ${t.priority === 'high' ? 'Alta' : t.priority === 'medium' ? 'Média' : 'Baixa'}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Se não houver eventos
+            if (dayEvents.length === 0 && dayCustomEvents.length === 0 && dayTasks.length === 0 && !holiday) {
+                html = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        <span class="material-icons" style="font-size: 48px; margin-bottom: 1rem; opacity: 0.5;">event_available</span>
+                        <p>Nenhum evento para este dia</p>
+                        <button class="btn btn-primary" onclick="openAddEventModal('${dateStr}'); closeDayEventsModal();" style="margin-top: 1rem;">
+                            <span class="material-icons">add</span> Adicionar Evento
+                        </button>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+        
+        function closeDayEventsModal() {
+            const modal = document.getElementById('dayEventsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Fechar modal ao clicar fora
+        if (typeof document !== 'undefined') {
+            document.addEventListener('click', (e) => {
+                const modal = document.getElementById('dayEventsModal');
+                if (modal && e.target === modal) {
+                    closeDayEventsModal();
+                }
+            });
         }
         
         function showEventDetails(eventId) {
@@ -13902,7 +14726,17 @@ _Compartilhado via Sistema CSF_`;
                     const isOwner = currentUser?.id === e.createdBy;
                     const ownerLabel = isOwner ? '' : ` • ${e.createdByName || 'Anônimo'}`;
                     const timeLabel = e.time ? `${e.time} - ` : '';
-                    return `<div class="calendar-event custom-event" style="background: ${e.color};" onclick="showEventDetails('${e.id}')" title="${timeLabel}${e.title}${ownerLabel}">${e.time ? e.time + ' ' : ''}${e.title}</div>`;
+                    return `<div class="calendar-event custom-event" 
+                                style="background: ${e.color}; border-left: 3px solid ${e.color};"
+                                data-event-type="event"
+                                data-event-id="${e.id}"
+                                data-event-date="${dateStr}"
+                                draggable="true"
+                                onclick="showEventDetails('${e.id}')"
+                                oncontextmenu="showCalendarContextMenu(event, 'event', '${e.id}', '${dateStr}'); return false;"
+                                ondragstart="handleCalendarDragStart(event, 'event', '${e.id}', '${dateStr}')"
+                                ondragend="handleCalendarDragEnd(event)"
+                                title="${timeLabel}${e.title}${ownerLabel}">${e.time ? e.time + ' ' : ''}${e.title}</div>`;
                 }).join('');
                 
                 const totalEvents = events.length + customEvents.length;
@@ -13911,7 +14745,9 @@ _Compartilhado via Sistema CSF_`;
                 
                 html += `
                     <div class="calendar-day week-view-day${isToday ? ' today' : ''}${holiday ? ' holiday' : ''}" 
-                         data-date="${dateStr}" ondblclick="openAddEventModal('${dateStr}')">
+                         data-date="${dateStr}"
+                         onclick="if(event.target.closest('.calendar-event') === null && event.target.closest('.add-event-btn') === null && ${totalEvents} > 0) { showDayEvents('${dateStr}'); }"
+                         ondblclick="openAddEventModal('${dateStr}')">
                         <div class="calendar-date">${date.getDate()}</div>
                         ${holidayHtml}
                         ${countBadge}
@@ -13990,7 +14826,16 @@ _Compartilhado via Sistema CSF_`;
                 
                 customEvents.forEach(e => {
                     eventsHtml += `
-                        <div class="day-view-event custom" style="border-left-color: ${e.color};" onclick="showEventDetails('${e.id}')">
+                        <div class="day-view-event custom" 
+                             style="border-left-color: ${e.color};"
+                             data-event-type="event"
+                             data-event-id="${e.id}"
+                             data-event-date="${dateStr}"
+                             draggable="true"
+                             onclick="showEventDetails('${e.id}')"
+                             oncontextmenu="showCalendarContextMenu(event, 'event', '${e.id}', '${dateStr}'); return false;"
+                             ondragstart="handleCalendarDragStart(event, 'event', '${e.id}', '${dateStr}')"
+                             ondragend="handleCalendarDragEnd(event)">
                             <div class="day-event-header">
                                 <span class="day-event-type" style="background: ${e.color};">📌 Evento</span>
                             </div>
@@ -14761,7 +15606,16 @@ _Compartilhado via Sistema CSF_`;
 
 
         async function deleteCourse(id) {
-            if (!confirm('Tem certeza que deseja excluir este curso?\n\nVocê pode desfazer esta ação com Ctrl+Z.')) return;
+            const confirmed = await showConfirmModal({
+                type: 'danger',
+                title: 'Excluir Curso',
+                message: 'Tem certeza que deseja excluir este curso?\n\nVocê pode desfazer esta ação com Ctrl+Z.',
+                confirmText: 'Excluir',
+                confirmBtnClass: 'btn-danger',
+                cancelText: 'Cancelar'
+            });
+            
+            if (!confirmed) return;
 
             try {
                 const course = cursos.find(c => c.id === id);
@@ -14805,7 +15659,16 @@ _Compartilhado via Sistema CSF_`;
         }
 
         async function deleteInstructor(id) {
-            if (!confirm('Tem certeza que deseja excluir este instrutor?')) return;
+            const confirmed = await showConfirmModal({
+                type: 'danger',
+                title: 'Excluir Instrutor',
+                message: 'Tem certeza que deseja excluir este instrutor?',
+                confirmText: 'Excluir',
+                confirmBtnClass: 'btn-danger',
+                cancelText: 'Cancelar'
+            });
+            
+            if (!confirmed) return;
 
             try {
                 const instructor = instrutores.find(i => i.id === id);
@@ -14828,7 +15691,16 @@ _Compartilhado via Sistema CSF_`;
         }
 
         async function deleteUser(id) {
-            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+            const confirmed = await showConfirmModal({
+                type: 'danger',
+                title: 'Excluir Usuário',
+                message: 'Tem certeza que deseja excluir este usuário?',
+                confirmText: 'Excluir',
+                confirmBtnClass: 'btn-danger',
+                cancelText: 'Cancelar'
+            });
+            
+            if (!confirmed) return;
 
             try {
                 const user = usuarios.find(u => u.id === id);
@@ -17344,17 +18216,81 @@ _Compartilhado via Sistema CSF_`;
         // ==================== BUSCA GLOBAL ====================
         let globalSearchSelectedIndex = 0;
         let globalSearchResults = [];
+        let globalSearchDebounceTimeout = null;
+        let lastSearchQuery = '';
+        
+        // Função para escapar HTML (segurança) - usa a função existente
+        function escapeHTML(str) {
+            if (str == null) return '';
+            return escapeHtml(String(str)); // Usa a função existente escapeHtml
+        }
+        
+        // Validação de dados antes de usar
+        function validateData(data, type = 'array') {
+            if (type === 'array') {
+                return Array.isArray(data) ? data : [];
+            }
+            if (type === 'object') {
+                return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+            }
+            return data;
+        }
+        
+        // Fallback para Firebase
+        function safeFirebaseOperation(operation, fallback) {
+            try {
+                if (firebaseAvailable) {
+                    return operation();
+                } else {
+                    return fallback();
+                }
+            } catch (error) {
+                safeError('Erro no Firebase, usando fallback:', error);
+                return fallback();
+            }
+        }
+        
+        // Função para destacar texto pesquisado
+        function highlightSearchText(text, query) {
+            if (!query || !text) return escapeHTML(String(text || ''));
+            
+            const escapedText = escapeHTML(String(text));
+            const escapedQuery = escapeHTML(String(query));
+            const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            
+            return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+        }
         
         function openGlobalSearch() {
             const overlay = document.getElementById('globalSearchOverlay');
             const input = document.getElementById('globalSearchInput');
+            const container = document.querySelector('.global-search-container');
+            
             overlay.classList.add('active');
             input.value = '';
-            input.focus();
+            
+            // Destaque visual ao abrir
+            if (container) {
+                container.style.animation = 'fadeInScale 0.3s ease';
+            }
+            
+            // Focar no input com pequeno delay para garantir que o modal está visível
+            setTimeout(() => {
+                input.focus();
+                // Mostrar atalhos visíveis
+                const shortcutHint = document.querySelector('.global-search-shortcut');
+                if (shortcutHint) {
+                    shortcutHint.style.opacity = '1';
+                }
+            }, 100);
+            
             document.getElementById('globalSearchResults').innerHTML = `
                 <div class="search-no-results" id="searchInitialState">
                     <span class="material-icons">search</span>
-                    <p>Digite para buscar...</p>
+                    <p>Digite para buscar cursos, instrutores, cidades...</p>
+                    <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <p>💡 Dica: Use <kbd style="padding: 2px 6px; background: var(--surface-hover); border-radius: 4px;">↑</kbd> <kbd style="padding: 2px 6px; background: var(--surface-hover); border-radius: 4px;">↓</kbd> para navegar, <kbd style="padding: 2px 6px; background: var(--surface-hover); border-radius: 4px;">Enter</kbd> para selecionar</p>
+                    </div>
                 </div>
             `;
             globalSearchSelectedIndex = 0;
@@ -17366,101 +18302,163 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function performGlobalSearch(query) {
-            if (!query.trim()) {
-                document.getElementById('globalSearchResults').innerHTML = `
-                    <div class="search-no-results">
-                        <span class="material-icons">search</span>
-                        <p>Digite para buscar...</p>
-                    </div>
-                `;
+            // Validar entrada
+            if (!query || typeof query !== 'string') {
+                query = '';
+            }
+            
+            const trimmedQuery = query.trim();
+            
+            if (!trimmedQuery) {
+                const container = document.getElementById('globalSearchResults');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="search-no-results">
+                            <span class="material-icons">search</span>
+                            <p>Digite para buscar...</p>
+                        </div>
+                    `;
+                }
                 globalSearchResults = [];
+                lastSearchQuery = '';
                 return;
             }
             
-            const q = query.toLowerCase();
+            // Salvar último termo pesquisado
+            lastSearchQuery = trimmedQuery;
+            localStorage.setItem('lastSearchQuery', trimmedQuery);
+            
+            const q = trimmedQuery.toLowerCase();
             globalSearchResults = [];
             
-            // Buscar em cursos
-            const cursoResults = cursos.filter(c => 
-                (c.curso && c.curso.toLowerCase().includes(q)) ||
-                (c.lote && c.lote.toLowerCase().includes(q)) ||
-                (c.cidade && c.cidade.toLowerCase().includes(q)) ||
-                (c.instrutor && c.instrutor.toLowerCase().includes(q))
-            ).slice(0, 5).map(c => ({
+            // Validar arrays antes de usar
+            const cursosArray = Array.isArray(cursos) ? cursos : [];
+            const instrutoresArray = Array.isArray(instrutores) ? instrutores : [];
+            const tasksArray = Array.isArray(tasks) ? tasks : [];
+            
+            // Buscar em cursos com validação
+            const cursoResults = cursosArray.filter(c => {
+                if (!c || typeof c !== 'object') return false;
+                return (c.curso && c.curso.toLowerCase().includes(q)) ||
+                       (c.lote && c.lote.toLowerCase().includes(q)) ||
+                       (c.cidade && c.cidade.toLowerCase().includes(q)) ||
+                       (c.instrutor && c.instrutor.toLowerCase().includes(q));
+            }).slice(0, 5).map(c => ({
                 type: 'curso',
-                id: c.id,
-                title: c.curso || c.lote,
+                id: c.id || '',
+                title: c.curso || c.lote || 'Sem nome',
                 subtitle: `${c.cidade || ''} • ${c.instrutor || 'Sem instrutor'}`,
                 status: normalizeStatus(c.status),
-                icon: 'school'
+                icon: 'school',
+                originalQuery: trimmedQuery
             }));
             
-            // Buscar em instrutores
-            const instrutorResults = instrutores.filter(i =>
-                (i.nome && i.nome.toLowerCase().includes(q)) ||
-                (i.especialidade && i.especialidade.toLowerCase().includes(q))
-            ).slice(0, 3).map(i => ({
+            // Buscar em instrutores com validação
+            const instrutorResults = instrutoresArray.filter(i => {
+                if (!i || typeof i !== 'object') return false;
+                return (i.nome && i.nome.toLowerCase().includes(q)) ||
+                       (i.especialidade && i.especialidade.toLowerCase().includes(q));
+            }).slice(0, 3).map(i => ({
                 type: 'instrutor',
-                id: i.id,
-                title: i.nome,
+                id: i.id || '',
+                title: i.nome || 'Sem nome',
                 subtitle: i.especialidade || 'Sem especialidade',
-                icon: 'person'
+                icon: 'person',
+                originalQuery: trimmedQuery
             }));
             
-            // Buscar em tarefas
-            const tarefaResults = tasks.filter(t =>
-                (t.title && t.title.toLowerCase().includes(q)) ||
-                (t.description && t.description.toLowerCase().includes(q))
-            ).slice(0, 3).map(t => ({
+            // Buscar em tarefas com validação
+            const tarefaResults = tasksArray.filter(t => {
+                if (!t || typeof t !== 'object') return false;
+                return (t.title && t.title.toLowerCase().includes(q)) ||
+                       (t.description && t.description.toLowerCase().includes(q));
+            }).slice(0, 3).map(t => ({
                 type: 'tarefa',
-                id: t.id,
-                title: t.title,
-                subtitle: `${formatDateBR(t.dueDate)} • ${t.completed ? 'Concluída' : 'Pendente'}`,
+                id: t.id || '',
+                title: t.title || 'Sem título',
+                subtitle: `${t.dueDate ? formatDateBR(t.dueDate) : 'Sem data'} • ${t.completed ? 'Concluída' : 'Pendente'}`,
                 status: t.completed ? 'concluida' : 'pendente',
-                icon: 'task_alt'
+                icon: 'task_alt',
+                originalQuery: trimmedQuery
             }));
             
+            // Usar spread operator corretamente
             globalSearchResults = [...cursoResults, ...instrutorResults, ...tarefaResults];
             globalSearchSelectedIndex = 0;
             
-            renderSearchResults();
+            renderSearchResults(trimmedQuery);
         }
         
-        function renderSearchResults() {
-            const container = document.getElementById('globalSearchResults');
+        // Função com debounce para busca
+        function performGlobalSearchDebounced(query) {
+            // Limpar timeout anterior
+            if (globalSearchDebounceTimeout) {
+                clearTimeout(globalSearchDebounceTimeout);
+            }
             
-            if (globalSearchResults.length === 0) {
-                container.innerHTML = `
+            // Se query vazia, executar imediatamente
+            if (!query || !query.trim()) {
+                performGlobalSearch(query);
+                return;
+            }
+            
+            // Aguardar 300ms antes de executar busca
+            globalSearchDebounceTimeout = setTimeout(() => {
+                performGlobalSearch(query);
+            }, 300);
+        }
+        
+        function renderSearchResults(query = '') {
+            const container = document.getElementById('globalSearchResults');
+            if (!container) return;
+            
+            // Usar documentFragment para melhor performance
+            const fragment = document.createDocumentFragment();
+            const wrapper = document.createElement('div');
+            
+            if (!Array.isArray(globalSearchResults) || globalSearchResults.length === 0) {
+                wrapper.innerHTML = `
                     <div class="search-no-results">
                         <span class="material-icons">search_off</span>
                         <p>Nenhum resultado encontrado</p>
                     </div>
                 `;
+                fragment.appendChild(wrapper);
+                container.innerHTML = '';
+                container.appendChild(fragment);
                 return;
             }
             
-            const cursos = globalSearchResults.filter(r => r.type === 'curso');
-            const instrutores = globalSearchResults.filter(r => r.type === 'instrutor');
-            const tarefas = globalSearchResults.filter(r => r.type === 'tarefa');
+            const cursos = globalSearchResults.filter(r => r && r.type === 'curso');
+            const instrutores = globalSearchResults.filter(r => r && r.type === 'instrutor');
+            const tarefas = globalSearchResults.filter(r => r && r.type === 'tarefa');
             
-            let html = '';
+            // Total de resultados
+            const totalResults = globalSearchResults.length;
+            
+            let html = `<div class="search-results-header" style="padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-secondary);">
+                <strong>${totalResults}</strong> resultado${totalResults !== 1 ? 's' : ''} encontrado${totalResults !== 1 ? 's' : ''}
+            </div>`;
+            
             let index = 0;
             
             if (cursos.length > 0) {
                 html += `<div class="search-result-group">
-                    <div class="search-result-group-title">Cursos</div>
+                    <div class="search-result-group-title">Cursos (${cursos.length})</div>
                     ${cursos.map(r => {
                         const selected = index === globalSearchSelectedIndex ? 'selected' : '';
+                        const highlightedTitle = highlightSearchText(r.title, query);
+                        const highlightedSubtitle = highlightSearchText(r.subtitle, query);
                         const itemHtml = `
-                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})">
+                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})" role="button" tabindex="0" aria-label="Abrir ${r.title}">
                                 <div class="search-result-icon">
-                                    <span class="material-icons">${r.icon}</span>
+                                    <span class="material-icons">${r.icon || 'school'}</span>
                                 </div>
                                 <div class="search-result-content">
-                                    <div class="search-result-title">${r.title}</div>
-                                    <div class="search-result-subtitle">${r.subtitle}</div>
+                                    <div class="search-result-title">${highlightedTitle}</div>
+                                    <div class="search-result-subtitle">${highlightedSubtitle}</div>
                                 </div>
-                                <span class="search-result-badge status-${getStatusClass(r.status)}">${r.status}</span>
+                                <span class="search-result-badge status-${getStatusClass(r.status)}">${r.status || ''}</span>
                             </div>
                         `;
                         index++;
@@ -17471,17 +18469,19 @@ _Compartilhado via Sistema CSF_`;
             
             if (instrutores.length > 0) {
                 html += `<div class="search-result-group">
-                    <div class="search-result-group-title">Instrutores</div>
+                    <div class="search-result-group-title">Instrutores (${instrutores.length})</div>
                     ${instrutores.map(r => {
                         const selected = index === globalSearchSelectedIndex ? 'selected' : '';
+                        const highlightedTitle = highlightSearchText(r.title, query);
+                        const highlightedSubtitle = highlightSearchText(r.subtitle, query);
                         const itemHtml = `
-                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})">
+                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})" role="button" tabindex="0" aria-label="Abrir ${r.title}">
                                 <div class="search-result-icon">
-                                    <span class="material-icons">${r.icon}</span>
+                                    <span class="material-icons">${r.icon || 'person'}</span>
                                 </div>
                                 <div class="search-result-content">
-                                    <div class="search-result-title">${r.title}</div>
-                                    <div class="search-result-subtitle">${r.subtitle}</div>
+                                    <div class="search-result-title">${highlightedTitle}</div>
+                                    <div class="search-result-subtitle">${highlightedSubtitle}</div>
                                 </div>
                             </div>
                         `;
@@ -17493,17 +18493,19 @@ _Compartilhado via Sistema CSF_`;
             
             if (tarefas.length > 0) {
                 html += `<div class="search-result-group">
-                    <div class="search-result-group-title">Tarefas</div>
+                    <div class="search-result-group-title">Tarefas (${tarefas.length})</div>
                     ${tarefas.map(r => {
                         const selected = index === globalSearchSelectedIndex ? 'selected' : '';
+                        const highlightedTitle = highlightSearchText(r.title, query);
+                        const highlightedSubtitle = highlightSearchText(r.subtitle, query);
                         const itemHtml = `
-                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})">
+                            <div class="search-result-item ${selected}" data-index="${index}" onclick="selectSearchResult(${index})" role="button" tabindex="0" aria-label="Abrir ${r.title}">
                                 <div class="search-result-icon">
-                                    <span class="material-icons">${r.icon}</span>
+                                    <span class="material-icons">${r.icon || 'task_alt'}</span>
                                 </div>
                                 <div class="search-result-content">
-                                    <div class="search-result-title">${r.title}</div>
-                                    <div class="search-result-subtitle">${r.subtitle}</div>
+                                    <div class="search-result-title">${highlightedTitle}</div>
+                                    <div class="search-result-subtitle">${highlightedSubtitle}</div>
                                 </div>
                             </div>
                         `;
@@ -17513,7 +18515,10 @@ _Compartilhado via Sistema CSF_`;
                 </div>`;
             }
             
-            container.innerHTML = html;
+            wrapper.innerHTML = html;
+            fragment.appendChild(wrapper);
+            container.innerHTML = '';
+            container.appendChild(fragment);
         }
         
         function selectSearchResult(index) {
@@ -17629,10 +18634,30 @@ _Compartilhado via Sistema CSF_`;
                 lastKeyTime = now;
             });
             
-            // Busca global - input
-            document.getElementById('globalSearchInput')?.addEventListener('input', (e) => {
-                performGlobalSearch(e.target.value);
-            });
+            // Busca global - input com debounce
+            const globalSearchInput = document.getElementById('globalSearchInput');
+            if (globalSearchInput) {
+                globalSearchInput.addEventListener('input', (e) => {
+                    performGlobalSearchDebounced(e.target.value);
+                });
+                
+                // Permitir ENTER abrir item selecionado
+                globalSearchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && globalSearchResults.length > 0) {
+                        e.preventDefault();
+                        const selectedResult = globalSearchResults[globalSearchSelectedIndex];
+                        if (selectedResult) {
+                            selectSearchResult(globalSearchSelectedIndex);
+                        }
+                    }
+                });
+                
+                // Carregar último termo pesquisado
+                const lastQuery = localStorage.getItem('lastSearchQuery');
+                if (lastQuery) {
+                    globalSearchInput.placeholder = `Última busca: "${lastQuery}"`;
+                }
+            }
         }
         
         // ==================== SELETOR DE TEMAS ====================
@@ -17727,15 +18752,160 @@ _Compartilhado via Sistema CSF_`;
             container.innerHTML = html;
         }
         
+        // ==================== MODAL DE CONFIRMAÇÃO ====================
+        let confirmModalResolve = null;
+        
+        function showConfirmModal(options = {}) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const icon = document.getElementById('confirmModalIcon');
+                const title = document.getElementById('confirmModalTitle');
+                const message = document.getElementById('confirmModalMessage');
+                const confirmBtn = document.getElementById('confirmModalConfirm');
+                const cancelBtn = document.getElementById('confirmModalCancel');
+                
+                if (!modal) return resolve(false);
+                
+                // Configurar tipo e conteúdo
+                const type = options.type || 'warning';
+                const iconType = options.iconType || type;
+                
+                // Configurar ícone
+                icon.className = `confirm-modal-icon ${iconType}`;
+                const iconMap = {
+                    danger: 'delete',
+                    warning: 'warning',
+                    info: 'info'
+                };
+                icon.innerHTML = `<span class="material-icons">${iconMap[iconType] || 'warning'}</span>`;
+                
+                // Configurar texto
+                title.textContent = options.title || 'Confirmar ação';
+                message.textContent = options.message || 'Tem certeza que deseja continuar?';
+                
+                // Configurar botões
+                confirmBtn.textContent = options.confirmText || 'Confirmar';
+                confirmBtn.className = `btn ${options.confirmBtnClass || 'btn-primary'}`;
+                cancelBtn.textContent = options.cancelText || 'Cancelar';
+                
+                // Mostrar modal
+                modal.classList.add('active');
+                confirmModalResolve = resolve;
+                
+                // Focar no botão de cancelar por padrão
+                cancelBtn.focus();
+            });
+        }
+        
+        // Event listeners do modal de confirmação
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('confirmModal');
+            const confirmBtn = document.getElementById('confirmModalConfirm');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+            
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (modal) modal.classList.remove('active');
+                    if (confirmModalResolve) {
+                        confirmModalResolve(true);
+                        confirmModalResolve = null;
+                    }
+                });
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    if (modal) modal.classList.remove('active');
+                    if (confirmModalResolve) {
+                        confirmModalResolve(false);
+                        confirmModalResolve = null;
+                    }
+                });
+            }
+            
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                        if (confirmModalResolve) {
+                            confirmModalResolve(false);
+                            confirmModalResolve = null;
+                        }
+                    }
+                });
+            }
+        });
+
+        // ==================== FILTROS DE PERÍODO NO DASHBOARD ====================
+        let dashboardPeriod = 180; // Padrão: 6 meses
+        
+        function setDashboardPeriod(period) {
+            dashboardPeriod = period;
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.dashboard-period-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period == period);
+            });
+            
+            // Atualizar gráficos
+            if (document.getElementById('dashboardPage')?.classList.contains('active')) {
+                renderDashboardCharts();
+            }
+            
+            // Atualizar subtítulo
+            const subtitle = document.getElementById('chartPeriodSubtitle');
+            if (subtitle) {
+                if (period === 7) subtitle.textContent = 'Últimos 7 dias';
+                else if (period === 30) subtitle.textContent = 'Últimos 30 dias';
+                else if (period === 180) subtitle.textContent = 'Últimos 6 meses';
+                else subtitle.textContent = 'Todos os períodos';
+            }
+        }
+        
+        function getDashboardPeriodFilter() {
+            if (dashboardPeriod === 'all') return null;
+            
+            const now = new Date();
+            const daysAgo = new Date();
+            daysAgo.setDate(now.getDate() - dashboardPeriod);
+            return daysAgo;
+        }
+
         // ==================== DASHBOARD CHARTS ====================
         let coursesTimelineChart = null;
         let coursesStatusChart = null;
+        let dashboardChartsLoaded = false;
         
         function renderDashboardCharts() {
+            // Lazy load: só renderizar se o dashboard estiver ativo
+            const dashboardPage = document.getElementById('dashboardPage');
+            if (!dashboardPage || !dashboardPage.classList.contains('active')) {
+                return;
+            }
+            
             renderCoursesTimelineChart();
             renderCoursesStatusChart();
             renderDashboardTimeline();
             renderRecentCourses();
+            dashboardChartsLoaded = true;
+        }
+        
+        // Observar quando o dashboard é ativado
+        function initDashboardLazyLoad() {
+            const dashboardPage = document.getElementById('dashboardPage');
+            if (!dashboardPage) return;
+            
+            // Usar MutationObserver para detectar quando a página é ativada
+            const observer = new MutationObserver(() => {
+                if (dashboardPage.classList.contains('active') && !dashboardChartsLoaded) {
+                    renderDashboardCharts();
+                }
+            });
+            
+            observer.observe(dashboardPage, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
         }
         
         // Renderizar cursos recentes no dashboard
@@ -17790,30 +18960,79 @@ _Compartilhado via Sistema CSF_`;
                 coursesTimelineChart.destroy();
             }
             
-            // Calcular dados dos últimos 6 meses
+            // Calcular dados baseado no período selecionado
+            const periodFilter = getDashboardPeriodFilter();
             const months = [];
             const iniciados = [];
             const concluidos = [];
             
-            for (let i = 5; i >= 0; i--) {
+            let monthsToShow = 6;
+            if (dashboardPeriod === 7) monthsToShow = 7; // 7 dias
+            else if (dashboardPeriod === 30) monthsToShow = 4; // 4 semanas
+            else if (dashboardPeriod === 180) monthsToShow = 6; // 6 meses
+            else monthsToShow = 12; // Para "todos"
+            
+            for (let i = monthsToShow - 1; i >= 0; i--) {
                 const date = new Date();
-                date.setMonth(date.getMonth() - i);
+                let label = '';
+                
+                if (dashboardPeriod === 7) {
+                    // Últimos 7 dias - mostrar por dia
+                    date.setDate(date.getDate() - i);
+                    const day = date.getDate();
+                    const month = date.getMonth();
+                    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    label = `${day} ${monthNames[month]}`;
+                } else if (dashboardPeriod === 30) {
+                    // Últimos 30 dias - mostrar por semana
+                    date.setDate(date.getDate() - (i * 7));
+                    const week = Math.ceil(date.getDate() / 7);
+                    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    label = `Sem ${week} ${monthNames[date.getMonth()]}`;
+                } else {
+                    // Por mês
+                    date.setMonth(date.getMonth() - i);
+                    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    label = monthNames[date.getMonth()];
+                }
+                
+                months.push(label);
+                
                 const year = date.getFullYear();
                 const month = date.getMonth();
-                
-                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                months.push(monthNames[month]);
+                const day = date.getDate();
                 
                 const iniciadosCount = cursos.filter(c => {
                     if (!c.inicio) return false;
                     const d = new Date(c.inicio);
-                    return d.getFullYear() === year && d.getMonth() === month;
+                    if (periodFilter && d < periodFilter) return false;
+                    
+                    if (dashboardPeriod === 7) {
+                        return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+                    } else if (dashboardPeriod === 30) {
+                        const weekStart = new Date(year, month, day - (day % 7));
+                        const weekEnd = new Date(year, month, day - (day % 7) + 6);
+                        return d >= weekStart && d <= weekEnd;
+                    } else {
+                        return d.getFullYear() === year && d.getMonth() === month;
+                    }
                 }).length;
                 
                 const concluidosCount = cursos.filter(c => {
                     if (!c.fim) return false;
                     const d = new Date(c.fim);
-                    return d.getFullYear() === year && d.getMonth() === month && normalizeStatus(c.status) === 'Concluído';
+                    if (periodFilter && d < periodFilter) return false;
+                    if (normalizeStatus(c.status) !== 'Concluído') return false;
+                    
+                    if (dashboardPeriod === 7) {
+                        return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+                    } else if (dashboardPeriod === 30) {
+                        const weekStart = new Date(year, month, day - (day % 7));
+                        const weekEnd = new Date(year, month, day - (day % 7) + 6);
+                        return d >= weekStart && d <= weekEnd;
+                    } else {
+                        return d.getFullYear() === year && d.getMonth() === month;
+                    }
                 }).length;
                 
                 iniciados.push(iniciadosCount);
@@ -18403,15 +19622,23 @@ _Compartilhado via Sistema CSF_`;
                     }
                 }
             
-                // Aplicar paginação
+                // Garantir que currentPage e itemsPerPage estão definidos globalmente
+                if (typeof currentPage === 'undefined' || currentPage === null) {
+                    window.currentPage = 1;
+                }
+                if (typeof itemsPerPage === 'undefined' || itemsPerPage === null || itemsPerPage > 20) {
+                    window.itemsPerPage = 20;
+                }
+                
+                // Aplicar paginação - 20 cursos por página
                 const totalItems = filtered.length;
-                const currentPageValue = typeof currentPage !== 'undefined' ? currentPage : 1;
-                const itemsPerPageValue = typeof itemsPerPage !== 'undefined' ? itemsPerPage : 10000;
+                const currentPageValue = window.currentPage || 1;
+                const itemsPerPageValue = window.itemsPerPage || 20;
                 const startIndex = (currentPageValue - 1) * itemsPerPageValue;
                 const endIndex = startIndex + itemsPerPageValue;
                 const paginatedCourses = filtered.slice(startIndex, endIndex);
             
-            // Renderizar paginação
+            // Renderizar paginação ANTES de renderizar os cursos
             renderPagination(totalItems);
             
             // Renderizar todos os cursos sem organização por LOTE
@@ -18466,12 +19693,6 @@ _Compartilhado via Sistema CSF_`;
                                         </div>
                                     ` : ''}
                                 </div>
-                                ${course.nota ? `
-                                    <div class="course-note">
-                                        <span class="material-icons">sticky_note_2</span>
-                                        <span class="course-note-text">${course.nota}</span>
-                                    </div>
-                                ` : ''}
                                 ${renderCourseAlerts(alerts, course.id)}
                             </div>
                         `;
@@ -18504,17 +19725,9 @@ _Compartilhado via Sistema CSF_`;
                                             </div>
                                             <h3 style="margin: 0; font-size: 1.1rem;">${course.curso || 'Sem nome'}</h3>
                                         </div>
-                                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.875rem;">
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">location_on</span> ${course.cidade || 'N/A'}</span>
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">person</span> ${course.instrutor || 'N/A'}</span>
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">groups</span> ${course.alunos || 0} concludentes</span>
+                                        <div class="course-info" style="display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.875rem;">
+                                            ${renderCardFields(course)}
                                         </div>
-                                        ${course.nota ? `
-                                            <div class="course-note" style="margin-top: 1rem;">
-                                                <span class="material-icons">sticky_note_2</span>
-                                                <span class="course-note-text">${course.nota}</span>
-                                            </div>
-                                        ` : ''}
                                     </div>
                                 </div>
                             `;
@@ -18545,7 +19758,7 @@ _Compartilhado via Sistema CSF_`;
                                                 ${canEdit ? `
                                                     <div class="course-actions" onclick="event.stopPropagation()">
                                                         ${course.driveLink ? `
-                                                            <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Instrumentais">
+                                                            <button class="drive" onclick="openDriveLink('${course.driveLink}')" title="Arquivos Instrumentais">
                                                                 <span class="material-icons">folder</span>
                                                             </button>
                                                         ` : ''}
@@ -18564,30 +19777,8 @@ _Compartilhado via Sistema CSF_`;
                                                 ` : ''}
                                             </div>
                                             <div class="course-info">
-                                                ${(() => {
-                                                    // Usar campos dinâmicos se disponível
-                                                    if (typeof window.renderCardFields === 'function') {
-                                                        return window.renderCardFields(course);
-                                                    }
-                                                    // Fallback para campos fixos
-                                                    return `
-                                                        <div class="course-info-item">
-                                                            <span class="material-icons">location_on</span>
-                                                            ${course.cidade || 'Local não definido'}${course.local ? ' - ' + course.local : ''}
-                                                        </div>
-                                                        <div class="course-info-item">
-                                                            <span class="material-icons">event</span>
-                                                            <span>${course.inicio && course.fim ? formatDate(course.inicio) + ' - ' + formatDate(course.fim) : course.inicio ? formatDate(course.inicio) : course.fim ? formatDate(course.fim) : 'Não informado'}</span>
-                                                        </div>
-                                                    `;
-                                                })()}
+                                                ${renderCardFields(course)}
                                             </div>
-                                            ${course.nota ? `
-                                                <div class="course-note">
-                                                    <span class="material-icons">sticky_note_2</span>
-                                                    <span class="course-note-text">${course.nota}</span>
-                                                </div>
-                                            ` : ''}
                                             ${renderCourseAlerts(alerts, course.id)}
                                         </div>
                                     </div>
@@ -19091,7 +20282,7 @@ _Compartilhado via Sistema CSF_`;
         let currentFilters = {};
         let currentSort = { field: 'name', direction: 'asc' };
         let currentPage = 1;
-        let itemsPerPage = 10000; // Mostrar todos os cursos
+        let itemsPerPage = 20; // Mostrar 20 cursos por página
         let notifications = [];
         let changeHistory = [];
         let unsavedChanges = false;
@@ -19796,19 +20987,31 @@ _Compartilhado via Sistema CSF_`;
         
         // 4. Paginação
         function initializePagination() {
+            // Garantir que as variáveis estão inicializadas
+            if (typeof window.currentPage === 'undefined' || window.currentPage === null) {
+                window.currentPage = 1;
+            }
+            if (typeof window.itemsPerPage === 'undefined' || window.itemsPerPage === null || window.itemsPerPage > 20) {
+                window.itemsPerPage = 20;
+            }
+            
             const prevBtn = document.getElementById('prevPageBtn');
             const nextBtn = document.getElementById('nextPageBtn');
             
             if (prevBtn) prevBtn.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderCoursesByLote();
+                if (window.currentPage > 1) {
+                    window.currentPage--;
+                    if (typeof renderCoursesByLote === 'function') {
+                        renderCoursesByLote();
+                    }
                 }
             });
             
             if (nextBtn) nextBtn.addEventListener('click', () => {
-                currentPage++;
-                renderCoursesByLote();
+                window.currentPage++;
+                if (typeof renderCoursesByLote === 'function') {
+                    renderCoursesByLote();
+                }
             });
         }
         
@@ -19818,24 +21021,51 @@ _Compartilhado via Sistema CSF_`;
             
             if (!container) return;
             
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            // Garantir que itemsPerPage está definido como 20
+            const itemsPerPageValue = (typeof window.itemsPerPage !== 'undefined' && window.itemsPerPage !== null && window.itemsPerPage <= 20) ? window.itemsPerPage : 20;
+            const currentPageValue = (typeof window.currentPage !== 'undefined' && window.currentPage !== null) ? window.currentPage : 1;
             
-            // Ocultar paginação se mostrar todos os cursos ou se houver apenas 1 página
-            if (totalPages <= 1 || itemsPerPage >= 10000) {
+            const totalPages = Math.ceil(totalItems / itemsPerPageValue);
+            
+            // Ocultar paginação se houver apenas 1 página
+            if (totalPages <= 1) {
                 container.style.display = 'none';
+                if (pageInfo) pageInfo.style.display = 'none';
                 return;
             }
             
             container.style.display = 'flex';
             if (pageInfo) {
-                pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+                pageInfo.textContent = `Página ${currentPageValue} de ${totalPages} (${totalItems} cursos)`;
+                pageInfo.style.display = 'block';
             }
             
             const prevBtn = document.getElementById('prevPageBtn');
             const nextBtn = document.getElementById('nextPageBtn');
             
-            if (prevBtn) prevBtn.disabled = currentPage === 1;
-            if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+            if (prevBtn) {
+                prevBtn.disabled = currentPageValue === 1;
+                prevBtn.onclick = () => {
+                    if (currentPageValue > 1) {
+                        window.currentPage = currentPageValue - 1;
+                        if (typeof renderCoursesByLote === 'function') {
+                            renderCoursesByLote();
+                        }
+                    }
+                };
+            }
+            
+            if (nextBtn) {
+                nextBtn.disabled = currentPageValue >= totalPages;
+                nextBtn.onclick = () => {
+                    if (currentPageValue < totalPages) {
+                        window.currentPage = currentPageValue + 1;
+                        if (typeof renderCoursesByLote === 'function') {
+                            renderCoursesByLote();
+                        }
+                    }
+                };
+            }
         }
         
         // 5. Ordenação
@@ -20153,13 +21383,49 @@ _Compartilhado via Sistema CSF_`;
                         
                         const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
                         
-                        if (!json || json.length === 0) {
+                        // Validações de segurança
+                        if (!json || !Array.isArray(json)) {
+                            reject(new Error('Dados inválidos na planilha'));
+                            return;
+                        }
+                        
+                        if (json.length === 0) {
                             reject(new Error('Planilha vazia ou sem dados'));
                             return;
                         }
                         
-                        safeLog('Arquivo lido com sucesso:', json.length, 'linhas');
-                        resolve(json);
+                        // Validar e sanitizar dados
+                        const sanitizedJson = json.map((row, index) => {
+                            if (!row || typeof row !== 'object') {
+                                safeWarn(`Linha ${index + 1} ignorada: dados inválidos`);
+                                return null;
+                            }
+                            
+                            // Sanitizar valores do objeto
+                            const sanitized = {};
+                            for (const key in row) {
+                                if (row.hasOwnProperty(key)) {
+                                    // Remover possíveis scripts maliciosos
+                                    const value = row[key];
+                                    if (value != null) {
+                                        // Converter para string e remover caracteres perigosos
+                                        const strValue = String(value).replace(/<script[^>]*>.*?<\/script>/gi, '');
+                                        sanitized[key] = strValue;
+                                    } else {
+                                        sanitized[key] = '';
+                                    }
+                                }
+                            }
+                            return sanitized;
+                        }).filter(row => row !== null); // Remover linhas inválidas
+                        
+                        if (sanitizedJson.length === 0) {
+                            reject(new Error('Nenhum dado válido encontrado após sanitização'));
+                            return;
+                        }
+                        
+                        safeLog('Arquivo lido com sucesso:', sanitizedJson.length, 'linhas válidas');
+                        resolve(sanitizedJson);
                     } catch (error) {
                         safeError('Erro ao processar arquivo Excel:', error);
                         reject(new Error('Erro ao processar arquivo Excel: ' + (error.message || 'Erro desconhecido')));
@@ -20173,21 +21439,27 @@ _Compartilhado via Sistema CSF_`;
             });
         }
         
+        // ==================== IMPORTAÇÃO EXCEL PROFISSIONAL ====================
+        let excelColumnMapping = {};
+        let excelValidationErrors = [];
+        let excelImportReport = {
+            total: 0,
+            imported: 0,
+            updated: 0,
+            ignored: 0,
+            errors: []
+        };
+        
         function showImportPreview(data) {
             const preview = document.getElementById('importPreview');
             const container = document.getElementById('previewTableContainer');
             
-            if (!preview) {
-                safeError('Elemento importPreview não encontrado');
+            if (!preview || !container) {
+                safeError('Elementos de preview não encontrados');
                 return;
             }
             
-            if (!container) {
-                safeError('Elemento previewTableContainer não encontrado');
-                return;
-            }
-            
-            if (!data || data.length === 0) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
                 container.innerHTML = '<p style="padding: 1rem; color: var(--text-muted);">Nenhum dado encontrado no arquivo</p>';
                 preview.style.display = 'block';
                 return;
@@ -20195,8 +21467,8 @@ _Compartilhado via Sistema CSF_`;
             
             safeLog('Exibindo preview de', data.length, 'registros');
             
-            // Mostrar primeiras 10 linhas
-            const previewData = data.slice(0, 10);
+            // Mostrar máximo 50 primeiras linhas
+            const previewData = data.slice(0, 50);
             const headers = Object.keys(previewData[0] || {});
             
             if (headers.length === 0) {
@@ -20205,21 +21477,69 @@ _Compartilhado via Sistema CSF_`;
                 return;
             }
             
+            // Detectar automaticamente mapeamento de colunas
+            detectColumnMapping(headers);
+            
             let html = `
-                <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-                    Mostrando ${previewData.length} de ${data.length} registros
-                </p>
-                <div style="overflow-x: auto; max-height: 400px;">
+                <div class="import-preview-header" style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Preview da Planilha</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Mostrando ${previewData.length} de ${data.length} registros
+                        ${data.length > 50 ? '<br><small style="color: var(--text-muted);">Apenas as primeiras 50 linhas são exibidas no preview</small>' : ''}
+                    </p>
+                </div>
+                
+                <!-- Seleção de Colunas -->
+                <div class="column-mapping-section" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border);">
+                    <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons" style="font-size: 20px;">settings</span>
+                        Mapeamento de Colunas
+                    </h5>
+                    <div class="column-mapping-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        ${getColumnMappingFields(headers)}
+                    </div>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="detectColumnMapping(${JSON.stringify(headers).replace(/"/g, '&quot;')})">
+                            <span class="material-icons" style="font-size: 16px;">auto_fix_high</span>
+                            Detectar Automaticamente
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="resetColumnMapping()">
+                            Limpar Mapeamento
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Opções de Importação -->
+                <div class="import-options" style="margin-bottom: 1rem; padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border);">
+                    <h5 style="margin-bottom: 1rem;">Opções de Importação</h5>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="duplicateAction" value="update" checked style="cursor: pointer;">
+                            <span>Atualizar registros existentes</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="duplicateAction" value="ignore" style="cursor: pointer;">
+                            <span>Ignorar duplicados</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="continueOnErrors" checked style="cursor: pointer;">
+                            <span>Continuar mesmo com erros</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Preview da Tabela -->
+                <div style="overflow-x: auto; max-height: 400px; border: 1px solid var(--border); border-radius: 8px;">
                     <table class="preview-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="background: var(--surface);">
-                                ${headers.map(h => `<th style="padding: 0.5rem; border: 1px solid var(--border); text-align: left;">${h}</th>`).join('')}
+                            <tr style="background: var(--surface); position: sticky; top: 0; z-index: 10;">
+                                ${headers.map(h => `<th style="padding: 0.75rem; border: 1px solid var(--border); text-align: left; font-weight: 600;">${escapeHtml(h)}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
-                            ${previewData.map(row => `
-                                <tr>
-                                    ${headers.map(h => `<td style="padding: 0.5rem; border: 1px solid var(--border);">${row[h] !== undefined && row[h] !== null ? String(row[h]) : ''}</td>`).join('')}
+                            ${previewData.map((row, idx) => `
+                                <tr class="preview-row" data-index="${idx}">
+                                    ${headers.map(h => `<td style="padding: 0.5rem; border: 1px solid var(--border);">${escapeHtml(String(row[h] !== undefined && row[h] !== null ? row[h] : ''))}</td>`).join('')}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -20232,17 +21552,242 @@ _Compartilhado via Sistema CSF_`;
             safeLog('Preview exibido com sucesso');
         }
         
+        // Detectar mapeamento automático de colunas - VERSÃO MELHORADA E MAIS INTELIGENTE
+        function detectColumnMapping(headers) {
+            const fieldMappings = {
+                'curso': ['curso', 'nome', 'nome do curso', 'titulo', 'título', 'name', 'title', 'turma', 'capacitação'],
+                'idLote': ['id', 'id lote', 'id do lote', 'código', 'codigo', 'numero', 'número', 'nº', 'n°'],
+                'lote': ['lote', 'lote do curso', 'número do lote', 'numero do lote', 'grupo', 'batch'],
+                'cargaHoraria': ['carga horária', 'carga horaria', 'carga', 'horas', 'hora', 'ch', 'duração', 'duracao'],
+                'cidade': ['cidade', 'local', 'localidade', 'município', 'municipio', 'municipio', 'city', 'município de realização'],
+                'local': ['local', 'endereço', 'endereco', 'address', 'local de realização', 'local de realizacao', 'localização', 'localizacao'],
+                'instrutor': ['instrutor', 'professor', 'docente', 'facilitador', 'instructor', 'teacher', 'responsável', 'responsavel'],
+                'inicio': ['inicio', 'início', 'data inicio', 'data início', 'data de inicio', 'data de início', 'dt inicio', 'dt início', 'start', 'data inicial', 'começo', 'comeco'],
+                'fim': ['fim', 'data fim', 'data de fim', 'dt fim', 'conclusão', 'conclusao', 'end', 'data final', 'término', 'termino'],
+                'status': ['status', 'situação', 'situacao', 'estado', 'state', 'situação do curso'],
+                'concludentes': ['concludentes', 'alunos', 'participantes', 'quantidade', 'qtd', 'qtd alunos', 'quantidade de alunos', 'total', 'students'],
+                'nota': ['nota', 'anotação', 'anotacao', 'observação', 'observacao', 'obs', 'observações', 'observacoes', 'comentário', 'comentario'],
+                'driveLink': ['drive', 'link drive', 'link do drive', 'instrumental', 'instrumentais', 'arquivos', 'arquivo', 'documentos', 'docs'],
+                'albumLink': ['album', 'álbum', 'album de fotos', 'fotos', 'fotografias', 'imagens', 'photos', 'galeria', 'galeria de fotos']
+            };
+            
+            excelColumnMapping = {};
+            
+            headers.forEach(header => {
+                const headerLower = header.toLowerCase().trim();
+                let bestMatch = null;
+                let bestScore = 0;
+                
+                // Busca inteligente com pontuação
+                for (const [field, aliases] of Object.entries(fieldMappings)) {
+                    for (const alias of aliases) {
+                        // Match exato
+                        if (headerLower === alias) {
+                            bestMatch = field;
+                            bestScore = 100;
+                            break;
+                        }
+                        // Match parcial (contém)
+                        if (headerLower.includes(alias) || alias.includes(headerLower)) {
+                            const score = Math.min(headerLower.length, alias.length) / Math.max(headerLower.length, alias.length) * 80;
+                            if (score > bestScore) {
+                                bestMatch = field;
+                                bestScore = score;
+                            }
+                        }
+                    }
+                    if (bestScore === 100) break;
+                }
+                
+                if (bestMatch && bestScore > 50) {
+                    excelColumnMapping[header] = bestMatch;
+                }
+            });
+            
+            // Atualizar selects se já existirem
+            updateColumnMappingSelects(headers);
+            
+            // Mostrar quantos campos foram detectados
+            const detectedCount = Object.keys(excelColumnMapping).length;
+            if (detectedCount > 0) {
+                showToast(`${detectedCount} campo(s) detectado(s) automaticamente`, 'success', { duration: 3000 });
+            }
+        }
+        
+        function getColumnMappingFields(headers) {
+            const fieldOptions = [
+                { value: '', label: '-- Não mapear --' },
+                { value: 'idLote', label: 'ID' },
+                { value: 'curso', label: 'Nome do Curso' },
+                { value: 'lote', label: 'Lote' },
+                { value: 'cargaHoraria', label: 'Carga Horária' },
+                { value: 'cidade', label: 'Cidade' },
+                { value: 'local', label: 'Local/Endereço' },
+                { value: 'instrutor', label: 'Instrutor' },
+                { value: 'inicio', label: 'Data de Início' },
+                { value: 'fim', label: 'Data de Fim' },
+                { value: 'status', label: 'Status' },
+                { value: 'concludentes', label: 'Concludentes' },
+                { value: 'nota', label: 'Anotação' },
+                { value: 'driveLink', label: 'Instrumentais' },
+                { value: 'albumLink', label: 'Álbum de Fotos' }
+            ];
+            
+            return headers.map(header => `
+                <div class="column-mapping-item">
+                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.85rem; color: var(--text-secondary);">
+                        ${escapeHtml(header)}
+                    </label>
+                    <select class="form-select column-mapping-select" data-column="${escapeHtmlAttribute(header)}" style="width: 100%;">
+                        ${fieldOptions.map(opt => `
+                            <option value="${opt.value}" ${excelColumnMapping[header] === opt.value ? 'selected' : ''}>
+                                ${opt.label}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+            `).join('');
+        }
+        
+        function updateColumnMappingSelects(headers) {
+            headers.forEach(header => {
+                const select = document.querySelector(`.column-mapping-select[data-column="${escapeHtmlAttribute(header)}"]`);
+                if (select && excelColumnMapping[header]) {
+                    select.value = excelColumnMapping[header];
+                }
+            });
+        }
+        
+        function resetColumnMapping() {
+            excelColumnMapping = {};
+            document.querySelectorAll('.column-mapping-select').forEach(select => {
+                select.value = '';
+            });
+        }
+        
+        // Validar dados antes de importar
+        function validateExcelData(data) {
+            excelValidationErrors = [];
+            
+            if (!data || !Array.isArray(data)) {
+                excelValidationErrors.push({ type: 'geral', message: 'Dados inválidos' });
+                return false;
+            }
+            
+            data.forEach((row, index) => {
+                const lineNumber = index + 2; // +2 porque linha 1 é cabeçalho
+                
+                // Validar campos obrigatórios
+                const cursoField = getMappedValue(row, 'curso');
+                if (!cursoField || !cursoField.trim()) {
+                    excelValidationErrors.push({
+                        line: lineNumber,
+                        field: 'curso',
+                        message: 'Nome do curso vazio',
+                        type: 'obrigatorio'
+                    });
+                }
+                
+                // Validar datas
+                const inicioField = getMappedValue(row, 'inicio');
+                if (inicioField && !isValidDate(inicioField)) {
+                    excelValidationErrors.push({
+                        line: lineNumber,
+                        field: 'inicio',
+                        message: `Data de início inválida: "${inicioField}"`,
+                        type: 'data_invalida'
+                    });
+                }
+                
+                const fimField = getMappedValue(row, 'fim');
+                if (fimField && !isValidDate(fimField)) {
+                    excelValidationErrors.push({
+                        line: lineNumber,
+                        field: 'fim',
+                        message: `Data de fim inválida: "${fimField}"`,
+                        type: 'data_invalida'
+                    });
+                }
+                
+                // Validar concludentes (deve ser número)
+                const concludentesField = getMappedValue(row, 'concludentes');
+                if (concludentesField && isNaN(parseInt(concludentesField))) {
+                    excelValidationErrors.push({
+                        line: lineNumber,
+                        field: 'concludentes',
+                        message: `Número de concludentes inválido: "${concludentesField}"`,
+                        type: 'tipo_errado'
+                    });
+                }
+            });
+            
+            return excelValidationErrors.length === 0;
+        }
+        
+        function getMappedValue(row, field) {
+            // Encontrar coluna mapeada para este campo
+            for (const [column, mappedField] of Object.entries(excelColumnMapping)) {
+                if (mappedField === field && row[column] !== undefined) {
+                    return row[column];
+                }
+            }
+            return null;
+        }
+        
+        function isValidDate(dateString) {
+            if (!dateString) return false;
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date);
+        }
+        
         async function importPreviewData() {
             if (!previewData || previewData.length === 0) {
                 showToast('Nenhum dado para importar', 'warning');
                 return;
             }
             
+            // Coletar mapeamento de colunas
+            document.querySelectorAll('.column-mapping-select').forEach(select => {
+                const column = select.dataset.column;
+                const field = select.value;
+                if (field) {
+                    excelColumnMapping[column] = field;
+                }
+            });
+            
+            // Validar dados
+            const isValid = validateExcelData(previewData);
+            const continueOnErrors = document.getElementById('continueOnErrors')?.checked || false;
+            
+            if (!isValid && !continueOnErrors) {
+                showValidationErrors();
+                return;
+            }
+            
+            if (!isValid && continueOnErrors) {
+                const confirmed = await showConfirmModal({
+                    type: 'warning',
+                    title: 'Erros encontrados',
+                    message: `Foram encontrados ${excelValidationErrors.length} erro(s) na planilha. Deseja continuar mesmo assim?`,
+                    confirmText: 'Continuar',
+                    cancelText: 'Cancelar'
+                });
+                
+                if (!confirmed) {
+                    showValidationErrors();
+                    return;
+                }
+            }
+            
+            // Mostrar progresso
+            showImportProgress();
+            
             const preview = document.getElementById('importPreview');
             if (preview) preview.style.display = 'none';
             
             try {
-                await processExcelData(previewData);
+                const duplicateAction = document.querySelector('input[name="duplicateAction"]:checked')?.value || 'update';
+                await processExcelDataWithReport(previewData, duplicateAction);
                 previewData = null;
                 
                 // Limpar o input de arquivo após importação bem-sucedida
@@ -20254,6 +21799,277 @@ _Compartilhado via Sistema CSF_`;
                 safeError('Erro ao importar dados:', error);
                 showToast('Erro ao importar dados: ' + (error.message || 'Erro desconhecido'), 'error');
             }
+        }
+        
+        function showValidationErrors() {
+            const container = document.getElementById('previewTableContainer');
+            if (!container) return;
+            
+            const errorsHtml = `
+                <div class="validation-errors" style="margin-bottom: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 8px;">
+                    <h5 style="color: var(--danger); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons">error</span>
+                        Erros encontrados (${excelValidationErrors.length})
+                    </h5>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        ${excelValidationErrors.map(err => `
+                            <div style="padding: 0.5rem; margin-bottom: 0.25rem; background: var(--surface); border-radius: 4px;">
+                                <strong>Linha ${err.line}:</strong> ${err.message}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('afterbegin', errorsHtml);
+        }
+        
+        function showImportProgress() {
+            const progressHtml = `
+                <div id="importProgressModal" class="modal-overlay active" style="z-index: 10001;">
+                    <div class="modal" style="max-width: 500px;">
+                        <div class="modal-body" style="text-align: center;">
+                            <div class="loading-spinner" style="width: 48px; height: 48px; margin: 0 auto 1rem; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <h4 style="margin-bottom: 0.5rem;">Importando dados...</h4>
+                            <p style="color: var(--text-secondary);">Estamos validando sua planilha... isso pode levar alguns segundos 😉</p>
+                            <div id="importProgressBar" style="margin-top: 1rem; width: 100%; height: 8px; background: var(--surface); border-radius: 4px; overflow: hidden;">
+                                <div style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', progressHtml);
+        }
+        
+        function updateImportProgress(percent) {
+            const progressBar = document.querySelector('#importProgressBar > div');
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+        }
+        
+        function hideImportProgress() {
+            const modal = document.getElementById('importProgressModal');
+            if (modal) modal.remove();
+        }
+        
+        async function processExcelDataWithReport(data, duplicateAction = 'update') {
+            excelImportReport = {
+                total: data.length,
+                imported: 0,
+                updated: 0,
+                ignored: 0,
+                errors: []
+            };
+            
+            setLoadingState(true);
+            
+            try {
+                for (let i = 0; i < data.length; i++) {
+                    const row = data[i];
+                    updateImportProgress(((i + 1) / data.length) * 100);
+                    
+                    try {
+                        const cursoData = mapRowToCourse(row);
+                        
+                        if (!cursoData.curso || !cursoData.curso.trim()) {
+                            excelImportReport.ignored++;
+                            excelImportReport.errors.push({
+                                line: i + 2,
+                                message: 'Nome do curso vazio',
+                                data: row
+                            });
+                            continue;
+                        }
+                        
+                        // Verificar duplicado
+                        const existingCourse = cursos.find(c => 
+                            c.curso === cursoData.curso && 
+                            c.lote === cursoData.lote
+                        );
+                        
+                        if (existingCourse) {
+                            if (duplicateAction === 'update') {
+                                // Atualizar curso existente
+                                const oldData = { ...existingCourse };
+                                Object.assign(existingCourse, cursoData);
+                                excelImportReport.updated++;
+                                
+                                await addAuditLog('update', 'course', existingCourse.id, 
+                                    `Curso atualizado via importação Excel`, oldData, cursoData);
+                            } else {
+                                // Ignorar duplicado
+                                excelImportReport.ignored++;
+                            }
+                        } else {
+                            // Criar novo curso
+                            cursoData.id = 'course_' + Date.now() + '_' + i;
+                            cursoData.createdAt = new Date().toISOString();
+                            
+                            if (firebaseAvailable) {
+                                await db.collection('cursos').add(cursoData);
+                            } else {
+                                cursos.push(cursoData);
+                            }
+                            
+                            excelImportReport.imported++;
+                            
+                            await addAuditLog('create', 'course', cursoData.id, 
+                                `Curso criado via importação Excel: "${cursoData.curso}"`, null, cursoData);
+                        }
+                    } catch (error) {
+                        excelImportReport.errors.push({
+                            line: i + 2,
+                            message: error.message || 'Erro desconhecido',
+                            data: row
+                        });
+                    }
+                }
+                
+                // Salvar dados
+                if (!firebaseAvailable) {
+                    localStorage.setItem('cursos', JSON.stringify(cursos));
+                }
+                
+                // Registrar auditoria da importação
+                await addAuditLog('import', 'excel', null, 
+                    `Importação Excel: ${excelImportReport.imported} criados, ${excelImportReport.updated} atualizados, ${excelImportReport.ignored} ignorados`);
+                
+                hideImportProgress();
+                setLoadingState(false);
+                
+                // Mostrar relatório final
+                showImportReport();
+                
+            } catch (error) {
+                hideImportProgress();
+                setLoadingState(false);
+                throw error;
+            }
+        }
+        
+        function mapRowToCourse(row) {
+            const curso = {
+                curso: getMappedValue(row, 'curso') || '',
+                lote: getMappedValue(row, 'lote') || '',
+                cidade: getMappedValue(row, 'cidade') || '',
+                instrutor: getMappedValue(row, 'instrutor') || '',
+                inicio: formatExcelDate(getMappedValue(row, 'inicio')) || '',
+                fim: formatExcelDate(getMappedValue(row, 'fim')) || '',
+                status: getMappedValue(row, 'status') || 'Em Andamento',
+                concludentes: parseInt(getMappedValue(row, 'concludentes')) || 0
+            };
+            
+            return curso;
+        }
+        
+        function formatExcelDate(dateValue) {
+            if (!dateValue) return '';
+            
+            // Se já for uma data válida
+            if (dateValue instanceof Date) {
+                return dateValue.toISOString().split('T')[0];
+            }
+            
+            // Tentar parsear como data
+            const date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+            
+            return '';
+        }
+        
+        function showImportReport() {
+            const reportHtml = `
+                <div class="modal-overlay active" id="importReportModal" style="z-index: 10002;">
+                    <div class="modal" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <h3>
+                                <span class="material-icons">assessment</span>
+                                Relatório de Importação
+                            </h3>
+                            <button class="modal-close" onclick="closeModal('importReportModal')">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="import-report-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="stat-card" style="padding: 1rem; background: var(--surface); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 600; color: var(--primary);">${excelImportReport.total}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Total Lidos</div>
+                                </div>
+                                <div class="stat-card" style="padding: 1rem; background: var(--surface); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 600; color: var(--success);">${excelImportReport.imported}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Importados</div>
+                                </div>
+                                <div class="stat-card" style="padding: 1rem; background: var(--surface); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 600; color: var(--info);">${excelImportReport.updated}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Atualizados</div>
+                                </div>
+                                <div class="stat-card" style="padding: 1rem; background: var(--surface); border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 600; color: var(--warning);">${excelImportReport.ignored}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Ignorados</div>
+                                </div>
+                            </div>
+                            
+                            ${excelImportReport.errors.length > 0 ? `
+                                <div class="import-errors" style="margin-top: 1.5rem;">
+                                    <h5 style="margin-bottom: 0.75rem; color: var(--danger);">Erros (${excelImportReport.errors.length})</h5>
+                                    <div style="max-height: 200px; overflow-y: auto; background: var(--surface); border-radius: 8px; padding: 1rem;">
+                                        ${excelImportReport.errors.map(err => `
+                                            <div style="padding: 0.5rem; margin-bottom: 0.5rem; border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.1);">
+                                                <strong>Linha ${err.line}:</strong> ${err.message}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="modal-footer" style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button class="btn btn-secondary" onclick="exportImportReport()">
+                                    <span class="material-icons" style="font-size: 18px;">download</span>
+                                    Exportar Log
+                                </button>
+                                <button class="btn btn-primary" onclick="closeModal('importReportModal'); loadData();">
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', reportHtml);
+        }
+        
+        function exportImportReport() {
+            const reportText = `
+RELATÓRIO DE IMPORTAÇÃO EXCEL
+Data: ${new Date().toLocaleString('pt-BR')}
+
+ESTATÍSTICAS:
+- Total de registros lidos: ${excelImportReport.total}
+- Importados: ${excelImportReport.imported}
+- Atualizados: ${excelImportReport.updated}
+- Ignorados: ${excelImportReport.ignored}
+- Erros: ${excelImportReport.errors.length}
+
+${excelImportReport.errors.length > 0 ? `
+ERROS ENCONTRADOS:
+${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}`).join('\n')}
+` : ''}
+            `.trim();
+            
+            const blob = new Blob([reportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio_importacao_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
         
         async function processExcelData(json) {
@@ -20494,38 +22310,8 @@ _Compartilhado via Sistema CSF_`;
         }
         
         // Modificar renderCoursesByLote para usar filtros, ordenação e paginação
-        const originalRenderCoursesByLote = window.renderCoursesByLote;
-        window.renderCoursesByLote = function() {
-            let coursesToRender = [...cursos];
-            
-            // Aplicar filtros
-            coursesToRender = filterCourses(coursesToRender);
-            
-            // Aplicar ordenação
-            coursesToRender = sortCourses(coursesToRender);
-            
-            // Atualizar contador
-            
-            // Aplicar paginação
-            const totalItems = coursesToRender.length;
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            coursesToRender = coursesToRender.slice(startIndex, endIndex);
-            
-            // Renderizar paginação
-            renderPagination(totalItems);
-            
-            // Chamar função original com cursos filtrados
-            // (precisamos modificar a lógica para aceitar cursos pré-filtrados)
-            // Por enquanto, vamos manter a lógica original mas aplicar os filtros
-            if (originalRenderCoursesByLote) {
-                // Salvar cursos filtrados temporariamente
-                const originalCursos = cursos;
-                cursos = coursesToRender;
-                originalRenderCoursesByLote();
-                cursos = originalCursos;
-            }
-        };
+        // NOTA: A função renderCoursesByLote original já faz paginação, então não precisamos sobrescrever
+        // Removendo wrapper que estava causando problemas
         
         // A função applyFilters já coleta os valores dos filtros, então não precisamos duplicar aqui
 
@@ -21149,29 +22935,53 @@ _Compartilhado via Sistema CSF_`;
             inputs.forEach(i => i.value = '');
         }
 
-        // Audit Logs
-        function addAuditLog(action, entity, entityId, details, oldData = null, newData = null) {
+        // ==================== SISTEMA DE AUDITORIA COMPLETO ====================
+        async function addAuditLog(action, entity, entityId, details, oldData = null, newData = null) {
             const log = {
-                id: Date.now().toString(),
+                id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
                 timestamp: new Date().toISOString(),
                 user: currentUser?.name || 'Sistema',
+                userName: currentUser?.name || 'Sistema',
                 userId: currentUser?.id || null,
-                action: action, // create, update, delete, login, logout
-                entity: entity, // course, instructor, user, session
-                entityId: entityId,
+                action: action, // create, update, delete, login, logout, import, export
+                entity: entity, // course, instructor, user, session, excel
+                entityId: entityId || null,
+                idDoRegistro: entityId || null,
+                dataHora: new Date().toISOString(),
+                antes: oldData ? JSON.stringify(oldData) : null,
+                depois: newData ? JSON.stringify(newData) : null,
                 details: details,
                 oldData: oldData,
-                newData: newData
+                newData: newData,
+                ip: null, // Pode ser adicionado se necessário
+                userAgent: navigator.userAgent
             };
             
-            auditLogs.unshift(log);
-            
-            // Manter apenas os últimos 500 logs
-            if (auditLogs.length > 500) {
-                auditLogs = auditLogs.slice(0, 500);
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('auditoria').add({
+                        ...log,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    auditLogs.unshift(log);
+                    
+                    // Manter apenas os últimos 1000 logs
+                    if (auditLogs.length > 1000) {
+                        auditLogs = auditLogs.slice(0, 1000);
+                    }
+                    
+                    localStorage.setItem('auditLogs', JSON.stringify(auditLogs));
+                }
+            } catch (error) {
+                safeError('Erro ao registrar auditoria:', error);
+                // Fallback para localStorage mesmo em caso de erro
+                auditLogs.unshift(log);
+                if (auditLogs.length > 1000) {
+                    auditLogs = auditLogs.slice(0, 1000);
+                }
+                localStorage.setItem('auditLogs', JSON.stringify(auditLogs));
             }
-            
-            localStorage.setItem('auditLogs', JSON.stringify(auditLogs));
         }
 
         function showAuditLogs() {
@@ -22295,18 +24105,76 @@ _Compartilhado via Sistema CSF_`;
 
         function saveCardFields() {
             localStorage.setItem('cardFields', JSON.stringify(cardFields));
-            
-            // Atualizar todos os cards quando os campos do card forem alterados
-            if (typeof window.updateAllCourseCards === 'function') {
-                window.updateAllCourseCards();
-            } else {
-                // Fallback: re-renderizar cursos
-                if (typeof renderCoursesByLote === 'function') {
-                    renderCoursesByLote();
-                } else if (typeof renderCourses === 'function') {
-                    renderCourses();
-                }
+            // Atualizar todos os cards imediatamente após salvar
+            if (document.getElementById('coursesPage')?.classList.contains('active')) {
+                renderCoursesByLote();
             }
+            showToast('Campos do card atualizados com sucesso!', 'success', { duration: 3000 });
+        }
+        
+        // Função para renderizar campos do card dinamicamente - USADA EM TODOS OS CARDS
+        function renderCardFields(course) {
+            const enabledFields = getEnabledCardFields();
+            let html = '';
+            
+            enabledFields.forEach(field => {
+                let value = '';
+                let displayValue = '';
+                
+                if (field.isComputed) {
+                    // Campo computado (período)
+                    if (field.key === 'periodo') {
+                        if (course.inicio && course.fim) {
+                            displayValue = formatDate(course.inicio) + ' - ' + formatDate(course.fim);
+                        } else if (course.inicio) {
+                            displayValue = formatDate(course.inicio);
+                        } else if (course.fim) {
+                            displayValue = formatDate(course.fim);
+                        } else {
+                            displayValue = 'Não informado';
+                        }
+                    }
+                } else {
+                    // Campo direto do curso
+                    value = course[field.key] || '';
+                    displayValue = value;
+                    
+                    // Formatação especial para alguns campos
+                    if (field.key === 'alunos' || field.key === 'concludentes') {
+                        displayValue = value ? `${value} concludentes` : '0 concludentes';
+                    } else if (field.key === 'cidade' && course.local) {
+                        displayValue = `${value} - ${course.local}`;
+                    } else if (field.key === 'cidade' && !value) {
+                        displayValue = 'Local não definido';
+                    } else if (field.key === 'instrutor' && !value) {
+                        displayValue = 'Instrutor não definido';
+                    } else if (!displayValue && field.key !== 'nota') {
+                        displayValue = 'Não definido';
+                    }
+                }
+                
+                // Mostrar campo apenas se tiver valor ou se for campo obrigatório
+                if (displayValue && displayValue !== 'Não definido') {
+                    html += `
+                        <div class="course-info-item">
+                            <span class="material-icons">${field.icon || 'info'}</span>
+                            ${escapeHtml(String(displayValue))}
+                        </div>
+                    `;
+                }
+            });
+            
+            // Sempre mostrar anotação se existir (independente de estar configurada)
+            if (course.nota) {
+                html += `
+                    <div class="course-note">
+                        <span class="material-icons">sticky_note_2</span>
+                        <span class="course-note-text">${escapeHtml(course.nota)}</span>
+                    </div>
+                `;
+            }
+            
+            return html;
         }
 
         // Drag and drop para cards
@@ -22694,8 +24562,5 @@ _Compartilhado via Sistema CSF_`;
             // Log será feito dentro da função original
         }
     </script>
-    
-    <!-- JavaScript Modular -->
-    <script type="module" src="js/main.js"></script>
 </body>
 </html>

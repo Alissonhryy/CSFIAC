@@ -1,0 +1,34 @@
+{
+  "name": "csf-qualificacao-renda",
+  "version": "2.0.0",
+  "description": "Sistema de gestão de cursos CSF + Qualificação e Renda",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "csf",
+    "gestao",
+    "cursos",
+    "pwa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitest/ui": "^1.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "html2canvas": "^1.4.1",
+    "jszip": "^3.10.1",
+    "xlsx": "^0.18.5"
+  }
+}
+
