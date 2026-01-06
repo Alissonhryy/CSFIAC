@@ -1879,8 +1879,7 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .nav-item {
@@ -4781,8 +4780,67 @@
             transform: scale(1.1);
         }
 
+        /* Demandantes */
+        .demandantes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .demandante-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        .demandante-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .demandante-header h3 {
+            color: var(--text-primary);
+        }
+
+        .demandante-cursos {
+            transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .demandante-cursos h4 {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
         .btn-whatsapp-mini .material-icons {
             font-size: 14px;
+        }
+
+        .btn-expand-demandante {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+        }
+
+        .btn-expand-demandante:hover {
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .btn-expand-demandante .expand-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .demandante-card.expanded .expand-icon {
+            transform: rotate(180deg);
         }
 
         /* Settings */
@@ -9224,6 +9282,10 @@
                     <span class="material-icons">people</span>
                     <span class="nav-text">Instrutores</span>
                 </div>
+                <div class="nav-item" data-page="demandantes">
+                    <span class="material-icons">business</span>
+                    <span class="nav-text">Demandantes</span>
+                </div>
                 <div class="nav-item" data-page="users" id="usersNavItem" style="display: none;">
                     <span class="material-icons">admin_panel_settings</span>
                     <span class="nav-text">Usuários</span>
@@ -9796,6 +9858,22 @@
                 </div>
                 <div class="instructor-grid" id="instructorGrid">
                     <!-- Instructors will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Demandantes Page -->
+            <section class="page-section" id="demandantesPage">
+                <div class="page-header">
+                    <h2 class="page-title">Demandantes</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="newDemandanteBtn">
+                            <span class="material-icons">add</span>
+                            Novo Demandante
+                        </button>
+                    </div>
+                </div>
+                <div class="demandantes-container" id="demandantesContainer">
+                    <!-- Demandantes will be rendered here -->
                 </div>
             </section>
 
@@ -10795,10 +10873,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('viewCourseModal')"> Fechar</button>
-                <button type="button" class="btn btn-success" id="shareCourseBtnView" onclick="shareCourseWhatsApp(viewingCourseId)">
-                    <span class="material-icons">share</span>
-                    WhatsApp
-                </button>
                 <button type="button" class="btn btn-primary" id="editCourseFromViewBtn">
                     <span class="material-icons">edit</span>
                     Editar
@@ -10838,6 +10912,42 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('instructorModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">save</span>
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Demandante Modal -->
+    <div class="modal-overlay" id="demandanteModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="demandanteModalTitle">Novo Demandante</h3>
+                <button class="modal-close" onclick="closeModal('demandanteModal')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="demandanteForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Demandante <span class="required-label">*</span></label>
+                        <input type="text" class="form-input" id="demandanteName" placeholder="Nome completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefone de Contato <span class="required-label">*</span></label>
+                        <input type="tel" class="form-input" id="demandanteTelefone" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lote Responsável <span class="required-label">*</span></label>
+                        <input type="text" class="form-input" id="demandanteLote" placeholder="Ex: LOTE 15" required>
+                        <small class="form-hint">Ao salvar, os cursos deste lote serão automaticamente vinculados</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('demandanteModal')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
                         <span class="material-icons">save</span>
                         Salvar
@@ -11128,11 +11238,13 @@
         // State
         let cursos = [];
         let instrutores = [];
+        let demandantes = [];
         let usuarios = [];
         let activityLogs = [];
         let currentUser = null;
         let editingCourseId = null;
         let editingInstructorId = null;
+        let editingDemandanteId = null;
         let editingUserId = null;
         let currentMonth = new Date();
         let currentCalendarView = 'month'; // 'month', 'week', 'day'
@@ -11532,6 +11644,9 @@
                 firebaseAvailable = true;
                 safeLog('Firebase conectado com sucesso!');
                 await initializeUsers();
+                // Carregar e sincronizar configurações do Firebase
+                await loadSettingsFromFirebase();
+                setupSettingsSync();
             } catch (error) {
                 safeWarn('Firebase não disponível, usando localStorage:', error.message);
                 firebaseAvailable = false;
@@ -11548,6 +11663,9 @@
             }
             if (!localStorage.getItem('instrutores')) {
                 localStorage.setItem('instrutores', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('demandantes')) {
+                localStorage.setItem('demandantes', JSON.stringify([]));
             }
             if (!localStorage.getItem('activityLogs')) {
                 localStorage.setItem('activityLogs', JSON.stringify([]));
@@ -11577,6 +11695,129 @@
                 }
             } catch (error) {
                 safeWarn('Erro ao sincronizar loteNames do Firebase:', error);
+            }
+        }
+        
+        // Carregar configurações do Firebase
+        async function loadSettingsFromFirebase() {
+            if (!firebaseAvailable || typeof db === 'undefined') return;
+            
+            try {
+                // Carregar formFields
+                const formFieldsDoc = await db.collection('settings').doc('formFields').get();
+                if (formFieldsDoc.exists()) {
+                    const data = formFieldsDoc.data();
+                    if (data.fields && Array.isArray(data.fields)) {
+                        formFields = data.fields;
+                        localStorage.setItem('formFields', JSON.stringify(formFields));
+                        if (isDevelopment) {
+                            safeLog('formFields carregado do Firebase');
+                        }
+                    }
+                }
+                
+                // Carregar cardFields
+                const cardFieldsDoc = await db.collection('settings').doc('cardFields').get();
+                if (cardFieldsDoc.exists()) {
+                    const data = cardFieldsDoc.data();
+                    if (data.fields && Array.isArray(data.fields)) {
+                        cardFields = data.fields;
+                        localStorage.setItem('cardFields', JSON.stringify(cardFields));
+                        if (isDevelopment) {
+                            safeLog('cardFields carregado do Firebase');
+                        }
+                    }
+                }
+            } catch (error) {
+                safeError('Erro ao carregar configurações do Firebase:', error);
+            }
+        }
+        
+        // Configurar listeners para sincronização automática
+        function setupSettingsSync() {
+            if (!firebaseAvailable || typeof db === 'undefined') return;
+            
+            try {
+                // Listener para formFields
+                db.collection('settings').doc('formFields').onSnapshot((doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        if (data.fields && Array.isArray(data.fields)) {
+                            // Verificar se houve mudança (evitar loop infinito)
+                            const currentFieldsStr = JSON.stringify(formFields);
+                            const newFieldsStr = JSON.stringify(data.fields);
+                            
+                            if (currentFieldsStr !== newFieldsStr) {
+                                formFields = data.fields;
+                                localStorage.setItem('formFields', JSON.stringify(formFields));
+                                
+                                // Atualizar UI se estiver na página de configurações
+                                if (typeof renderFormFieldsList === 'function') {
+                                    renderFormFieldsList();
+                                    renderFormPreview();
+                                }
+                                
+                                // Notificar usuário sobre atualização
+                                if (typeof showToast === 'function') {
+                                    showToast('Configurações do formulário atualizadas', 'info', { duration: 3000 });
+                                }
+                                
+                                if (isDevelopment) {
+                                    safeLog('formFields sincronizado do Firebase');
+                                }
+                            }
+                        }
+                    }
+                }, (error) => {
+                    safeError('Erro no listener de formFields:', error);
+                });
+                
+                // Listener para cardFields
+                db.collection('settings').doc('cardFields').onSnapshot((doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        if (data.fields && Array.isArray(data.fields)) {
+                            // Verificar se houve mudança (evitar loop infinito)
+                            const currentFieldsStr = JSON.stringify(cardFields);
+                            const newFieldsStr = JSON.stringify(data.fields);
+                            
+                            if (currentFieldsStr !== newFieldsStr) {
+                                cardFields = data.fields;
+                                localStorage.setItem('cardFields', JSON.stringify(cardFields));
+                                
+                                // Atualizar UI se estiver na página de configurações
+                                if (typeof renderCardFieldsList === 'function') {
+                                    renderCardFieldsList();
+                                    renderCardPreview();
+                                }
+                                
+                                // Atualizar cards se estiver na página de cursos
+                                if (document.getElementById('coursesPage')?.classList.contains('active')) {
+                                    if (typeof renderCoursesByLote === 'function') {
+                                        renderCoursesByLote();
+                                    }
+                                }
+                                
+                                // Notificar usuário sobre atualização
+                                if (typeof showToast === 'function') {
+                                    showToast('Configurações dos cards atualizadas', 'info', { duration: 3000 });
+                                }
+                                
+                                if (isDevelopment) {
+                                    safeLog('cardFields sincronizado do Firebase');
+                                }
+                            }
+                        }
+                    }
+                }, (error) => {
+                    safeError('Erro no listener de cardFields:', error);
+                });
+                
+                if (isDevelopment) {
+                    safeLog('Listeners de sincronização configurados');
+                }
+            } catch (error) {
+                safeError('Erro ao configurar sincronização:', error);
             }
         }
 
@@ -11887,6 +12128,8 @@
             if (currentUser.role === 'viewer') {
                 document.getElementById('newCourseBtn').style.display = 'none';
                 document.getElementById('newInstructorBtn').style.display = 'none';
+                const newDemandanteBtn = document.getElementById('newDemandanteBtn');
+                if (newDemandanteBtn) newDemandanteBtn.style.display = 'none';
                 // Esconder configurações para visualizadores
                 const settingsNavItem = document.querySelector('.nav-item[data-page="settings"]');
                 if (settingsNavItem) settingsNavItem.style.display = 'none';
@@ -11902,6 +12145,8 @@
             } else {
                 document.getElementById('newCourseBtn').style.display = 'flex';
                 document.getElementById('newInstructorBtn').style.display = 'flex';
+                const newDemandanteBtn = document.getElementById('newDemandanteBtn');
+                if (newDemandanteBtn) newDemandanteBtn.style.display = 'flex';
                 const settingsNavItem = document.querySelector('.nav-item[data-page="settings"]');
                 if (settingsNavItem) settingsNavItem.style.display = 'flex';
                 // Mostrar tarefas para não-visualizadores
@@ -11970,6 +12215,12 @@
                     if (document.getElementById('coursesPage')?.classList.contains('active')) {
                         renderCoursesByLote();
                     }
+                    // Atualizar página de demandantes se estiver ativa
+                    if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                        if (typeof renderDemandantes === 'function') {
+                            renderDemandantes();
+                        }
+                    }
                     // Verificar alertas após carregar dados
                     if (typeof checkAutomaticAlerts === 'function') {
                         checkAutomaticAlerts();
@@ -11986,6 +12237,17 @@
                     updateInstructorSelect();
                 }, error => {
                     safeError('Erro ao carregar instrutores:', error);
+                    loadFromLocalStorage();
+                });
+
+                db.collection('demandantes').onSnapshot(snapshot => {
+                    demandantes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Atualizar renderização se a página estiver ativa
+                    if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                        renderDemandantes();
+                    }
+                }, error => {
+                    safeError('Erro ao carregar demandantes:', error);
                     loadFromLocalStorage();
                 });
 
@@ -12083,6 +12345,7 @@
             });
             cursos = uniqueCourses;
             instrutores = JSON.parse(localStorage.getItem('instrutores') || '[]');
+            demandantes = JSON.parse(localStorage.getItem('demandantes') || '[]');
             usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
             activityLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
             loteNames = JSON.parse(localStorage.getItem('loteNames') || '{}');
@@ -12115,6 +12378,11 @@
             updateCursoFilter();
             if (document.getElementById('coursesPage')?.classList.contains('active')) {
                 renderCoursesByLote();
+            }
+            if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                if (typeof renderDemandantes === 'function') {
+                    renderDemandantes();
+                }
             }
             // Verificar alertas após carregar dados
             if (typeof checkAutomaticAlerts === 'function') {
@@ -12210,6 +12478,10 @@
                         if (typeof renderCalendar === 'function') {
                             renderCalendar();
                         }
+                    } else if (page === 'demandantes') {
+                        if (typeof renderDemandantes === 'function') {
+                            renderDemandantes();
+                        }
                     }
                 } catch (renderError) {
                     safeError('Erro ao renderizar página:', renderError);
@@ -12273,7 +12545,6 @@
                         <div class="course-header">
                             <div>
                                 <div class="course-title">${course.curso || 'Sem nome'}</div>
-                                <div class="course-id">ID da Turma: ${course.idLote || 'N/A'}${course.loteResponsavel ? ' | ' + course.loteResponsavel : ''}</div>
                             </div>
                             ${canEdit ? `
                                 <div class="course-actions" onclick="event.stopPropagation()">
@@ -12365,30 +12636,55 @@
                     }
                 } else if (field.key === 'driveLink') {
                     if (value) {
-                        displayValue = '<a href="' + value + '" target="_blank"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir Instrumentais</a>';
+                        displayValue = '<a href="' + escapeHtmlAttribute(value) + '" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; font-weight: 500;"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir Instrumentais</a>';
                     } else {
                         return;
                     }
                 } else if (field.key === 'albumLink') {
                     if (value) {
-                        displayValue = '<a href="' + value + '" target="_blank"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir Álbum de Fotos</a>';
+                        displayValue = '<a href="' + escapeHtmlAttribute(value) + '" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; font-weight: 500;"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir Album</a>';
                     } else {
                         return;
                     }
-                } else if (field.type === 'tel' || field.key === 'telefone' || field.name.toLowerCase().includes('telefone') || field.name.toLowerCase().includes('whatsapp')) {
-                    if (value) {
-                        const phone = value.replace(/\D/g, '');
-                        displayValue = value;
-                        extraContent = '<button class="btn-whatsapp-mini" onclick="openWhatsApp(\'' + phone + '\')" title="WhatsApp"><span class="material-icons">chat</span></button>';
-                    } else {
-                        return;
-                    }
-                } else if (field.type === 'url' && value) {
-                    displayValue = '<a href="' + value + '" target="_blank"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir link</a>';
-                } else if (field.key === 'alunos') {
-                    displayValue = (value || 0) + ' concludentes';
                 } else {
-                    displayValue = value || 'Não informado';
+                    // Detectar campos de telefone/contato de forma mais abrangente
+                    const fieldKeyLower = field.key.toLowerCase();
+                    const fieldNameLower = (field.name || '').toLowerCase();
+                    const isPhoneField = field.type === 'tel' || 
+                                        fieldKeyLower.includes('telefone') || 
+                                        fieldKeyLower.includes('phone') || 
+                                        fieldKeyLower.includes('contato') || 
+                                        fieldKeyLower.includes('contact') ||
+                                        fieldKeyLower.includes('whatsapp') ||
+                                        fieldKeyLower.includes('celular') ||
+                                        fieldKeyLower.includes('mobile') ||
+                                        fieldNameLower.includes('telefone') || 
+                                        fieldNameLower.includes('phone') || 
+                                        fieldNameLower.includes('contato') || 
+                                        fieldNameLower.includes('contact') ||
+                                        fieldNameLower.includes('whatsapp') ||
+                                        fieldNameLower.includes('celular') ||
+                                        fieldNameLower.includes('mobile');
+                    
+                    if (isPhoneField) {
+                        if (value) {
+                            // Converter para string e remover caracteres não numéricos
+                            const phone = String(value).replace(/\D/g, '');
+                            displayValue = String(value);
+                            // Validar se tem pelo menos 10 dígitos (formato brasileiro mínimo)
+                            if (phone.length >= 10) {
+                                extraContent = '<button class="btn-whatsapp-mini" onclick="openWhatsApp(\'' + phone + '\')" title="WhatsApp"><span class="material-icons">chat</span></button>';
+                            }
+                        } else {
+                            return;
+                        }
+                    } else if (field.type === 'url' && value) {
+                        displayValue = '<a href="' + value + '" target="_blank"><span class="material-icons" style="font-size: 18px;">open_in_new</span> Abrir link</a>';
+                    } else if (field.key === 'alunos') {
+                        displayValue = (value || 0) + ' concludentes';
+                    } else {
+                        displayValue = value || 'Não informado';
+                    }
                 }
                 
                 html += `
@@ -12422,13 +12718,29 @@
             // Adicionar campos extras que não estão no formFields mas existem no curso
             const knownKeys = fields.map(f => f.key).concat(['inicio', 'fim', 'id', 'loteResponsavel']);
             Object.keys(course).forEach(key => {
-                if (!knownKeys.includes(key) && course[key] && course[key] !== '' && key !== 'id') {
+                // Ignorar campos de sistema
+                if (key === 'createdAt' || key === 'updatedAt' || key === 'id') {
+                    return;
+                }
+                
+                if (!knownKeys.includes(key) && course[key] && course[key] !== '') {
                     let displayValue = course[key];
                     let extraContent = '';
                     
-                    // Detectar se é telefone pelo nome da chave
-                    if (key.toLowerCase().includes('telefone') || key.toLowerCase().includes('phone') || key.toLowerCase().includes('whatsapp')) {
+                    // Detectar se é telefone/contato pelo nome da chave
+                    const keyLower = key.toLowerCase();
+                    const isPhoneField = keyLower.includes('telefone') || 
+                                       keyLower.includes('phone') || 
+                                       keyLower.includes('contato') || 
+                                       keyLower.includes('contact') ||
+                                       keyLower.includes('whatsapp') ||
+                                       keyLower.includes('celular') ||
+                                       keyLower.includes('mobile');
+                    
+                    if (isPhoneField) {
+                        // Converter para string e remover caracteres não numéricos
                         const phone = String(course[key]).replace(/\D/g, '');
+                        // Validar se tem pelo menos 10 dígitos (formato brasileiro mínimo)
                         if (phone.length >= 10) {
                             extraContent = '<button class="btn-whatsapp-mini" onclick="openWhatsApp(\'' + phone + '\')" title="WhatsApp"><span class="material-icons">chat</span></button>';
                         }
@@ -13210,6 +13522,564 @@ _Compartilhado via Sistema CSF_`;
             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
         }
 
+        // ==================== FUNÇÕES DE DEMANDANTES ====================
+        
+        // Extrair demandantes dos cursos importados
+        function extractDemandantesFromCourses() {
+            const demandantesMap = new Map();
+            
+            cursos.forEach(curso => {
+                const lote = (curso.lote || curso.loteResponsavel || '').trim();
+                if (!lote) return;
+                
+                // Buscar nome do demandante e telefone nos campos customizados
+                let demandanteNome = '';
+                let demandanteTelefone = '';
+                
+                // Procurar por campos que contenham "demandante" no nome ou key
+                Object.keys(curso).forEach(key => {
+                    const keyLower = key.toLowerCase();
+                    const value = curso[key];
+                    if (!value) return;
+                    
+                    // Buscar nome do demandante (qualquer campo com "demandante" que não seja telefone/contato)
+                    if (keyLower.includes('demandante') && 
+                        !keyLower.includes('telefone') && 
+                        !keyLower.includes('contato') && 
+                        !keyLower.includes('phone') &&
+                        !keyLower.includes('whatsapp') &&
+                        !keyLower.includes('celular')) {
+                        if (!demandanteNome) {
+                            demandanteNome = String(value).trim();
+                        }
+                    }
+                    
+                    // Buscar telefone do demandante (campos com telefone/contato e demandante, ou apenas contato)
+                    const isPhoneField = (keyLower.includes('telefone') || keyLower.includes('contato') || 
+                                         keyLower.includes('phone') || keyLower.includes('whatsapp') || 
+                                         keyLower.includes('celular') || keyLower.includes('mobile'));
+                    const hasDemandante = keyLower.includes('demandante');
+                    const isContactField = keyLower.includes('contato');
+                    
+                    if (isPhoneField && (hasDemandante || isContactField)) {
+                        if (!demandanteTelefone) {
+                            demandanteTelefone = String(value).trim();
+                        }
+                    }
+                });
+                
+                // Se encontrou nome do demandante ou lote, adicionar ao mapa
+                // Mostrar mesmo sem nome se tiver lote (pode ter sido importado sem nome)
+                if (demandanteNome || lote) {
+                    const loteKey = lote.toLowerCase();
+                    if (!demandantesMap.has(loteKey)) {
+                        demandantesMap.set(loteKey, {
+                            nome: demandanteNome || `Lote ${lote}`,
+                            telefone: demandanteTelefone,
+                            lote: lote,
+                            isFromCourse: true,
+                            id: 'extracted_' + loteKey.replace(/[^a-z0-9]/g, '_')
+                        });
+                    } else {
+                        // Se já existe, atualizar nome e telefone se não tiver
+                        const existing = demandantesMap.get(loteKey);
+                        if (!existing.nome || existing.nome === `Lote ${lote}`) {
+                            if (demandanteNome) {
+                                existing.nome = demandanteNome;
+                            }
+                        }
+                        if (!existing.telefone && demandanteTelefone) {
+                            existing.telefone = demandanteTelefone;
+                        }
+                    }
+                }
+            });
+            
+            return Array.from(demandantesMap.values());
+        }
+        
+        function renderDemandantes() {
+            const container = document.getElementById('demandantesContainer');
+            if (!container) return;
+            
+            // Combinar demandantes cadastrados com os extraídos dos cursos
+            const extractedDemandantes = extractDemandantesFromCourses();
+            const allDemandantes = [...demandantes];
+            
+            // Adicionar demandantes extraídos que não estão cadastrados
+            extractedDemandantes.forEach(extracted => {
+                const exists = demandantes.some(d => {
+                    const dLote = (d.lote || '').trim().toLowerCase();
+                    const eLote = (extracted.lote || '').trim().toLowerCase();
+                    return dLote === eLote;
+                });
+                if (!exists) {
+                    allDemandantes.push(extracted);
+                }
+            });
+            
+            if (allDemandantes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">business</span>
+                        <h3>Nenhum demandante encontrado</h3>
+                        <p>Adicione um demandante ou importe cursos com informações de demandantes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = allDemandantes.map((demandante, index) => {
+                // Buscar cursos do lote - comparação flexível
+                const demandanteLote = (demandante.lote || '').trim().toLowerCase();
+                const loteCursos = cursos.filter(c => {
+                    if (!demandanteLote) return false;
+                    
+                    const cursoLote = (c.lote || c.loteResponsavel || '').trim().toLowerCase();
+                    // Match exato
+                    if (cursoLote === demandanteLote) return true;
+                    // Match parcial (caso o lote tenha variações como "LOTE 15" vs "15")
+                    const loteNumber = demandanteLote.replace(/[^\d]/g, '');
+                    const cursoLoteNumber = cursoLote.replace(/[^\d]/g, '');
+                    if (loteNumber && cursoLoteNumber && loteNumber === cursoLoteNumber) return true;
+                    return false;
+                });
+                
+                const phone = demandante.telefone ? demandante.telefone.replace(/\D/g, '') : '';
+                const canEdit = currentUser?.role !== 'viewer' && !demandante.isFromCourse;
+                const cardId = `demandante-card-${demandante.id || index}`;
+                const isExpanded = false; // Iniciar sempre colapsado
+                
+                // Ordenar cursos: Pendentes e Em Andamento primeiro, Concluídos depois
+                const cursosOrdenados = [...loteCursos].sort((a, b) => {
+                    const statusA = normalizeStatus(a.status);
+                    const statusB = normalizeStatus(b.status);
+                    
+                    // Prioridade: Pendente > Em Andamento > Concluído
+                    const priority = {
+                        'Pendente': 1,
+                        'Em Andamento': 2,
+                        'Concluído': 3
+                    };
+                    
+                    const priorityA = priority[statusA] || 99;
+                    const priorityB = priority[statusB] || 99;
+                    
+                    return priorityA - priorityB;
+                });
+                
+                return `
+                    <div class="demandante-card" id="${cardId}" style="background: var(--surface); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                        <div class="demandante-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div style="flex: 1; cursor: pointer;" onclick="toggleDemandanteCard('${cardId}')">
+                                <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.25rem;">${escapeHtml(demandante.nome || 'Sem nome')}</h3>
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.9rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="material-icons" style="font-size: 18px;">phone</span>
+                                        <span>${escapeHtml(demandante.telefone || 'Não informado')}</span>
+                                        ${phone && phone.length >= 10 ? `
+                                            <button class="btn-whatsapp-mini" onclick="event.stopPropagation(); openWhatsApp('${phone}')" title="WhatsApp">
+                                                <span class="material-icons" style="font-size: 16px;">chat</span>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="material-icons" style="font-size: 18px;">inventory_2</span>
+                                        <span><strong>Lote:</strong> ${escapeHtml(demandante.lote || 'Não informado')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button class="btn btn-secondary btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `openDemandanteModal('${demandante.id}')` : ''}" title="${canEdit ? 'Editar' : 'Edição não permitida'}">
+                                    <span class="material-icons" style="font-size: 18px;">edit</span>
+                                </button>
+                                <button class="btn btn-danger btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `deleteDemandante('${demandante.id}')` : ''}" title="${canEdit ? 'Excluir' : 'Exclusão não permitida'}">
+                                    <span class="material-icons" style="font-size: 18px;">delete</span>
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); downloadDemandanteDetalhamento('${cardId}', '${escapeHtml(demandante.nome || 'Demandante')}', '${escapeHtml(demandante.lote || 'Lote')}')" title="Baixar Detalhamento (PNG)">
+                                    <span class="material-icons" style="font-size: 18px;">download</span>
+                                </button>
+                                <button class="btn-expand-demandante" onclick="event.stopPropagation(); toggleDemandanteCard('${cardId}')" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease;" title="Expandir/Recolher">
+                                    <span class="material-icons expand-icon" style="font-size: 20px; transition: transform 0.3s ease;">expand_more</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="demandante-cursos" id="${cardId}-cursos" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease; margin-top: 0; opacity: 0;">
+                            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                                <h4 style="margin: 0 0 1rem 0; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="material-icons" style="font-size: 20px;">school</span>
+                                    Cursos do Lote (${cursosOrdenados.length})
+                                </h4>
+                                ${cursosOrdenados.length > 0 ? `
+                                    <div style="display: grid; gap: 0.75rem;">
+                                        ${cursosOrdenados.map(curso => {
+                                            const status = normalizeStatus(curso.status);
+                                            const statusClass = getStatusClass(curso.status);
+                                            return `
+                                            <div style="padding: 1rem; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
+                                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                    <div>
+                                                        <strong style="color: var(--text-primary);">${escapeHtml(curso.curso || 'Sem nome')}</strong>
+                                                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                                            <span>📍 ${escapeHtml(curso.cidade || 'N/A')}</span>
+                                                            ${curso.local ? ` | 📌 ${escapeHtml(curso.local)}` : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div style="text-align: right; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end;">
+                                                        <span class="status-badge ${statusClass}" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">${status}</span>
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${curso.idLote || 'N/A'}</div>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                                    <span><strong>Carga Horária:</strong> ${escapeHtml(curso.cargaHoraria || 'N/A')}</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                        }).join('')}
+                                    </div>
+                                ` : `
+                                    <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); background: var(--background); border-radius: 8px; border: 1px dashed var(--border);">
+                                        <span class="material-icons" style="font-size: 32px; opacity: 0.5; margin-bottom: 0.5rem; display: block;">school_off</span>
+                                        <p style="margin: 0;">Nenhum curso encontrado para este lote</p>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleDemandanteCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            const cursosDiv = document.getElementById(cardId + '-cursos');
+            const expandIcon = card.querySelector('.expand-icon');
+            
+            if (!cursosDiv || !expandIcon) return;
+            
+            const isExpanded = cursosDiv.style.maxHeight && cursosDiv.style.maxHeight !== '0px' && cursosDiv.style.maxHeight !== '';
+            
+            if (isExpanded) {
+                // Recolher
+                cursosDiv.style.maxHeight = '0';
+                cursosDiv.style.marginTop = '0';
+                cursosDiv.style.opacity = '0';
+                expandIcon.style.transform = 'rotate(0deg)';
+                card.classList.remove('expanded');
+            } else {
+                // Expandir
+                // Primeiro definir altura para calcular scrollHeight
+                cursosDiv.style.maxHeight = 'none';
+                const height = cursosDiv.scrollHeight;
+                cursosDiv.style.maxHeight = '0';
+                // Forçar reflow
+                void cursosDiv.offsetHeight;
+                // Agora animar
+                cursosDiv.style.maxHeight = height + 'px';
+                cursosDiv.style.marginTop = '1.5rem';
+                cursosDiv.style.opacity = '1';
+                expandIcon.style.transform = 'rotate(180deg)';
+                card.classList.add('expanded');
+            }
+        }
+        
+        async function downloadDemandanteDetalhamento(cardId, demandanteNome, lote) {
+            if (typeof html2canvas === 'undefined') {
+                showToast('Biblioteca html2canvas não carregada. Recarregue a página.', 'error');
+                return;
+            }
+            
+            const card = document.getElementById(cardId);
+            if (!card) {
+                showToast('Card não encontrado!', 'error');
+                return;
+            }
+            
+            // Verificar se está expandido, se não, expandir temporariamente
+            const cursosDiv = document.getElementById(cardId + '-cursos');
+            const wasExpanded = cursosDiv && cursosDiv.style.maxHeight && cursosDiv.style.maxHeight !== '0px' && cursosDiv.style.maxHeight !== '';
+            
+            if (!wasExpanded) {
+                // Expandir temporariamente
+                cursosDiv.style.maxHeight = 'none';
+                cursosDiv.style.opacity = '1';
+                cursosDiv.style.marginTop = '1.5rem';
+                // Aguardar um pouco para renderizar
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            try {
+                showToast('Gerando imagem...', 'info', { duration: 2000 });
+                
+                // Criar elemento temporário com o conteúdo formatado
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.width = '800px';
+                tempDiv.style.padding = '2rem';
+                tempDiv.style.background = '#ffffff';
+                tempDiv.style.color = '#000000';
+                tempDiv.style.fontFamily = 'Arial, sans-serif';
+                
+                // Buscar dados do demandante
+                const demandanteLote = lote.toLowerCase();
+                // Encontrar o demandante no array (incluindo extraídos dos cursos)
+                const extractedDemandantes = extractDemandantesFromCourses();
+                const allDemandantesForSearch = [...demandantes, ...extractedDemandantes];
+                const demandanteData = allDemandantesForSearch.find(d => {
+                    const dLote = (d.lote || '').trim().toLowerCase();
+                    return dLote === demandanteLote || 
+                           dLote.replace(/[^\d]/g, '') === demandanteLote.replace(/[^\d]/g, '');
+                });
+                const telefone = demandanteData?.telefone || 'Não informado';
+                
+                // Buscar cursos do demandante
+                const loteCursos = cursos.filter(c => {
+                    const cursoLote = (c.lote || c.loteResponsavel || '').trim().toLowerCase();
+                    return cursoLote === demandanteLote || 
+                           cursoLote.replace(/[^\d]/g, '') === demandanteLote.replace(/[^\d]/g, '');
+                });
+                
+                // Ordenar cursos
+                const cursosOrdenados = [...loteCursos].sort((a, b) => {
+                    const statusA = normalizeStatus(a.status);
+                    const statusB = normalizeStatus(b.status);
+                    const priority = { 'Pendente': 1, 'Em Andamento': 2, 'Concluído': 3 };
+                    return (priority[statusA] || 99) - (priority[statusB] || 99);
+                });
+                
+                let htmlContent = `
+                    <div style="background: #ffffff; padding: 2rem; font-family: Arial, sans-serif; color: #000000;">
+                        <h1 style="margin: 0 0 1rem 0; font-size: 24px; color: #000000; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">
+                            ${escapeHtml(demandanteNome)}
+                        </h1>
+                        <div style="margin-bottom: 1.5rem; font-size: 14px; color: #333;">
+                            <div style="margin-bottom: 0.5rem;"><strong>Telefone:</strong> ${escapeHtml(telefone)}</div>
+                            <div><strong>Lote:</strong> ${escapeHtml(lote)}</div>
+                        </div>
+                        <h2 style="margin: 1.5rem 0 1rem 0; font-size: 18px; color: #000000; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem;">
+                            Cursos do Lote (${cursosOrdenados.length})
+                        </h2>
+                        <div style="display: grid; gap: 1rem;">
+                `;
+                
+                cursosOrdenados.forEach(curso => {
+                    const status = normalizeStatus(curso.status);
+                    const statusClass = getStatusClass(curso.status);
+                    const statusColors = {
+                        'Pendente': '#fbbf24',
+                        'Em Andamento': '#60a5fa',
+                        'Concluído': '#34d399'
+                    };
+                    const statusColor = statusColors[status] || '#999';
+                    
+                    htmlContent += `
+                        <div style="padding: 1rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid ${statusColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <div>
+                                    <strong style="font-size: 16px; color: #000;">${escapeHtml(curso.curso || 'Sem nome')}</strong>
+                                    <div style="font-size: 12px; color: #666; margin-top: 0.25rem;">
+                                        📍 ${escapeHtml(curso.cidade || 'N/A')}${curso.local ? ` | 📌 ${escapeHtml(curso.local)}` : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                        ${status}
+                                    </span>
+                                    <div style="font-size: 11px; color: #999; margin-top: 0.25rem;">ID: ${curso.idLote || 'N/A'}</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; color: #666;">
+                                <strong>Carga Horária:</strong> ${escapeHtml(curso.cargaHoraria || 'N/A')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `
+                        </div>
+                        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc; font-size: 12px; color: #999; text-align: center;">
+                            Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema CSF
+                        </div>
+                    </div>
+                `;
+                
+                tempDiv.innerHTML = htmlContent;
+                document.body.appendChild(tempDiv);
+                
+                // Gerar canvas
+                const canvas = await html2canvas(tempDiv, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    width: tempDiv.offsetWidth,
+                    height: tempDiv.scrollHeight
+                });
+                
+                // Remover elemento temporário
+                document.body.removeChild(tempDiv);
+                
+                // Converter para blob e baixar
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Detalhamento_${demandanteNome.replace(/[^a-z0-9]/gi, '_')}_${lote.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('Imagem baixada com sucesso!', 'success');
+                }, 'image/png');
+                
+                // Recolher se estava colapsado antes
+                if (!wasExpanded) {
+                    setTimeout(() => {
+                        cursosDiv.style.maxHeight = '0';
+                        cursosDiv.style.opacity = '0';
+                        cursosDiv.style.marginTop = '0';
+                    }, 500);
+                }
+                
+            } catch (error) {
+                safeError('Erro ao gerar imagem:', error);
+                showToast('Erro ao gerar imagem. Tente novamente.', 'error');
+                
+                // Recolher se estava colapsado antes
+                if (!wasExpanded) {
+                    cursosDiv.style.maxHeight = '0';
+                    cursosDiv.style.opacity = '0';
+                    cursosDiv.style.marginTop = '0';
+                }
+            }
+        }
+        
+        function openDemandanteModal(demandanteId = null) {
+            editingDemandanteId = demandanteId;
+            const modal = document.getElementById('demandanteModal');
+            const form = document.getElementById('demandanteForm');
+            const title = document.getElementById('demandanteModalTitle');
+            
+            if (!modal || !form || !title) {
+                safeError('Modal de demandante não encontrado!');
+                return;
+            }
+            
+            form.reset();
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+            
+            if (demandanteId) {
+                const demandante = demandantes.find(d => d.id === demandanteId);
+                if (demandante) {
+                    title.textContent = 'Editar Demandante';
+                    document.getElementById('demandanteName').value = demandante.nome || '';
+                    document.getElementById('demandanteTelefone').value = demandante.telefone || '';
+                    document.getElementById('demandanteLote').value = demandante.lote || '';
+                }
+            } else {
+                title.textContent = 'Novo Demandante';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        async function handleDemandanteSubmit(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('demandanteName').value.trim();
+            const telefone = document.getElementById('demandanteTelefone').value.trim();
+            const lote = document.getElementById('demandanteLote').value.trim();
+            
+            if (!nome || !telefone || !lote) {
+                showToast('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+            
+            const demandanteData = {
+                nome: nome,
+                telefone: telefone,
+                lote: lote,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                if (editingDemandanteId) {
+                    // Atualizar demandante existente
+                    const existingDemandante = demandantes.find(d => d.id === editingDemandanteId);
+                    if (existingDemandante) {
+                        demandanteData.createdAt = existingDemandante.createdAt || new Date().toISOString();
+                        demandanteData.id = editingDemandanteId;
+                        
+                        if (firebaseAvailable) {
+                            await db.collection('demandantes').doc(editingDemandanteId).set(demandanteData);
+                        } else {
+                            const index = demandantes.findIndex(d => d.id === editingDemandanteId);
+                            if (index !== -1) {
+                                demandantes[index] = demandanteData;
+                                localStorage.setItem('demandantes', JSON.stringify(demandantes));
+                            }
+                        }
+                        
+                        showToast('Demandante atualizado com sucesso!', 'success');
+                    }
+                } else {
+                    // Criar novo demandante
+                    demandanteData.id = 'demandante_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    demandanteData.createdAt = new Date().toISOString();
+                    
+                    if (firebaseAvailable) {
+                        await db.collection('demandantes').doc(demandanteData.id).set(demandanteData);
+                    } else {
+                        demandantes.push(demandanteData);
+                        localStorage.setItem('demandantes', JSON.stringify(demandantes));
+                    }
+                    
+                    showToast('Demandante adicionado com sucesso!', 'success');
+                }
+                
+                closeModal('demandanteModal');
+                renderDemandantes();
+                
+                if (typeof logActivity === 'function') {
+                    logActivity('Demandante', editingDemandanteId ? `Atualizou demandante: ${nome}` : `Adicionou demandante: ${nome}`, editingDemandanteId ? 'edit' : 'add');
+                }
+            } catch (error) {
+                safeError('Erro ao salvar demandante:', error);
+                showToast('Erro ao salvar demandante', 'error');
+            }
+        }
+        
+        async function deleteDemandante(demandanteId) {
+            const demandante = demandantes.find(d => d.id === demandanteId);
+            const demandanteNome = demandante?.nome || demandanteId;
+            
+            if (!confirm(`Tem certeza que deseja excluir o demandante "${demandanteNome}"?`)) return;
+            
+            try {
+                if (firebaseAvailable) {
+                    await db.collection('demandantes').doc(demandanteId).delete();
+                } else {
+                    demandantes = demandantes.filter(d => d.id !== demandanteId);
+                    localStorage.setItem('demandantes', JSON.stringify(demandantes));
+                }
+                
+                showToast('Demandante excluído com sucesso!', 'success');
+                renderDemandantes();
+                
+                if (typeof logActivity === 'function') {
+                    logActivity('Demandante', `Excluiu demandante: ${demandanteNome}`, 'delete');
+                }
+            } catch (error) {
+                safeError('Erro ao excluir demandante:', error);
+                showToast('Erro ao excluir demandante', 'error');
+            }
+        }
+
         function renderUsers() {
             const tbody = document.getElementById('usersTableBody');
             
@@ -13416,6 +14286,13 @@ _Compartilhado via Sistema CSF_`;
                     // Se a página de cursos estiver ativa, atualizar
                     if (document.getElementById('coursesPage')?.classList.contains('active')) {
                         renderCoursesByLote();
+                    }
+                    
+                    // Se a página de demandantes estiver ativa, atualizar
+                    if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                        if (typeof renderDemandantes === 'function') {
+                            renderDemandantes();
+                        }
                     }
                 }
             }, error => {
@@ -16378,8 +17255,63 @@ _Compartilhado via Sistema CSF_`;
                     for (let i = 0; i < json.length; i++) {
                         const row = json[i];
                         try {
-                            const nome = (row['NOME'] || row['nome'] || '').trim();
-                            const telefone = (row['TELEFONE'] || row['telefone'] || '').trim();
+                            // Buscar nome em várias variações de coluna
+                            let nome = '';
+                            let telefone = '';
+                            
+                            // Buscar nome
+                            for (const [key, value] of Object.entries(row)) {
+                                const keyLower = key.toLowerCase().trim();
+                                if ((keyLower === 'nome' || keyLower === 'name' || keyLower.includes('instrutor')) && !nome) {
+                                    nome = String(value || '').trim();
+                                }
+                            }
+                            
+                            // Buscar telefone em várias variações
+                            for (const [key, value] of Object.entries(row)) {
+                                const keyLower = key.toLowerCase().trim();
+                                if ((keyLower.includes('telefone') || 
+                                     keyLower.includes('phone') || 
+                                     keyLower.includes('contato') || 
+                                     keyLower.includes('contact') ||
+                                     keyLower.includes('whatsapp') ||
+                                     keyLower.includes('celular') ||
+                                     keyLower.includes('mobile')) && !telefone) {
+                                    // Converter para string preservando zeros à esquerda
+                                    if (value !== null && value !== undefined && value !== '') {
+                                        // Se for número, converter preservando formato
+                                        if (typeof value === 'number') {
+                                            telefone = String(value);
+                                        } else {
+                                            telefone = String(value).trim();
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Fallback para nomes de coluna exatos (case-insensitive)
+                            if (!nome) {
+                                nome = (row['NOME'] || row['nome'] || row['Nome'] || row['INSTRUTOR'] || row['instrutor'] || row['Instrutor'] || '').trim();
+                            }
+                            
+                            if (!telefone) {
+                                // Tentar buscar em todas as variações possíveis
+                                const phoneVariations = ['TELEFONE', 'telefone', 'Telefone', 'TELEFONE_CONTATO', 'telefone_contato',
+                                                         'CONTATO', 'contato', 'Contato', 'CONTATO_TELEFONE', 'contato_telefone',
+                                                         'WHATSAPP', 'whatsapp', 'WhatsApp', 'CELULAR', 'celular', 'Celular',
+                                                         'PHONE', 'phone', 'Phone', 'MOBILE', 'mobile', 'Mobile'];
+                                
+                                for (const variation of phoneVariations) {
+                                    if (row[variation] !== null && row[variation] !== undefined && row[variation] !== '') {
+                                        if (typeof row[variation] === 'number') {
+                                            telefone = String(row[variation]);
+                                        } else {
+                                            telefone = String(row[variation]).trim();
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
                             
                             // Validar que pelo menos o nome foi fornecido
                             if (!nome) {
@@ -19906,11 +20838,8 @@ _Compartilhado via Sistema CSF_`;
                                             <span class="status-badge ${statusClass(course)}">${normalizeStatus(course.status)}</span>
                                         </div>
                                         <h3 style="margin: 0; font-size: 1.1rem;">${course.curso || 'Sem nome'}</h3>
-                                        <div style="display: flex; gap: 2rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.875rem;">
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">location_on</span> ${course.cidade || 'N/A'}</span>
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">event</span> ${course.inicio && course.fim ? formatDate(course.inicio) + ' - ' + formatDate(course.fim) : 'N/A'}</span>
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">person</span> ${course.instrutor || 'N/A'}</span>
-                                            <span><span class="material-icons" style="font-size: 16px; vertical-align: middle;">groups</span> ${course.alunos || 0} concludentes</span>
+                                        <div class="course-info" style="margin-top: 0.75rem;">
+                                            ${renderCardFields(course)}
                                         </div>
                                     </div>
                                     ${canEdit ? `
@@ -19984,7 +20913,6 @@ _Compartilhado via Sistema CSF_`;
                                                         <span class="status-badge ${statusClass(course)}">${normalizeStatus(course.status)}</span>
                                                     </div>
                                                     <div class="course-title">${course.curso || 'Sem nome'}</div>
-                                                    <div class="course-id">ID: ${course.idLote || 'N/A'}${course.lote || course.loteResponsavel ? ' | ' + (course.lote || course.loteResponsavel) : ''}</div>
                                                 </div>
                                                 ${canEdit ? `
                                                     <div class="course-actions" onclick="event.stopPropagation()">
@@ -20401,6 +21329,8 @@ _Compartilhado via Sistema CSF_`;
                         openCourseModal();
                     } else if (activePage === 'instructorsPage') {
                         openInstructorModal();
+                    } else if (activePage === 'demandantesPage') {
+                        openDemandanteModal();
                     } else if (activePage === 'usersPage') {
                         openUserModal();
                     } else {
@@ -20438,6 +21368,10 @@ _Compartilhado via Sistema CSF_`;
                     document.getElementById('instructorsFileInput').click();
                 });
             }
+            const newDemandanteBtn = document.getElementById('newDemandanteBtn');
+            if (newDemandanteBtn) {
+                newDemandanteBtn.addEventListener('click', () => openDemandanteModal());
+            }
             document.getElementById('newUserBtn').addEventListener('click', () => openUserModal());
             
             // Mobile menu
@@ -20469,6 +21403,10 @@ _Compartilhado via Sistema CSF_`;
             document.getElementById('courseForm').addEventListener('submit', handleCourseSubmit);
             document.getElementById('instructorForm').addEventListener('submit', handleInstructorSubmit);
             document.getElementById('quickInstructorForm').addEventListener('submit', handleQuickInstructorSubmit);
+            const demandanteForm = document.getElementById('demandanteForm');
+            if (demandanteForm) {
+                demandanteForm.addEventListener('submit', handleDemandanteSubmit);
+            }
             document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
             document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
             document.getElementById('changeNameForm').addEventListener('submit', handleChangeName); 
@@ -20567,6 +21505,7 @@ _Compartilhado via Sistema CSF_`;
             courses: 'Cursos',
             calendar: 'Calendário',
             instructors: 'Instrutores',
+            demandantes: 'Demandantes',
             users: 'Usuários',
             settings: 'Configurações'
         };
@@ -21861,14 +22800,36 @@ _Compartilhado via Sistema CSF_`;
             currentFormFields.forEach(field => {
                 if (field.enabled && field.key && !fieldMappings[field.key]) {
                     // Criar aliases baseados no nome do campo e nas opções (se for select)
+                    const fieldNameLower = field.name.toLowerCase();
+                    const fieldKeyLower = field.key.toLowerCase();
+                    
                     const aliases = [
-                        field.name.toLowerCase(), 
-                        field.key.toLowerCase(),
+                        fieldNameLower, 
+                        fieldKeyLower,
                         // Adicionar variações comuns
-                        field.name.toLowerCase().replace(/\s+/g, '_'),
-                        field.name.toLowerCase().replace(/\s+/g, '-'),
-                        field.name.toLowerCase().replace(/\s+/g, ''),
+                        fieldNameLower.replace(/\s+/g, '_'),
+                        fieldNameLower.replace(/\s+/g, '-'),
+                        fieldNameLower.replace(/\s+/g, ''),
+                        fieldNameLower.replace(/\s+/g, ''),
                     ];
+                    
+                    // Se o campo contém "telefone" ou "contato", adicionar aliases específicos
+                    if (fieldNameLower.includes('telefone') || fieldNameLower.includes('contato') || 
+                        fieldKeyLower.includes('telefone') || fieldKeyLower.includes('contato') ||
+                        field.type === 'tel') {
+                        // Adicionar variações comuns para telefone/contato
+                        aliases.push('telefone', 'phone', 'contato', 'contact', 'whatsapp', 'celular', 'mobile');
+                        aliases.push('telefone contato', 'contato telefone', 'telefone de contato', 'contato do demandante');
+                        aliases.push('telefone_contato', 'contato_telefone', 'telefone_de_contato');
+                        aliases.push('telefone-contato', 'contato-telefone', 'telefone-de-contato');
+                        
+                        // Se contém "demandante", adicionar variações
+                        if (fieldNameLower.includes('demandante') || fieldKeyLower.includes('demandante')) {
+                            aliases.push('telefone demandante', 'demandante telefone', 'telefone do demandante');
+                            aliases.push('telefone_demandante', 'demandante_telefone', 'telefone_do_demandante');
+                            aliases.push('telefone-demandante', 'demandante-telefone', 'telefone-do-demandante');
+                        }
+                    }
                     
                     // Se for campo select, adicionar opções como aliases
                     if (field.type === 'select' && field.options && field.options.length > 0) {
@@ -22071,7 +23032,7 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function getMappedValue(row, field) {
-            // Encontrar coluna mapeada para este campo
+            // Primeiro, tentar encontrar coluna mapeada para este campo
             for (const [column, mappedField] of Object.entries(excelColumnMapping)) {
                 if (mappedField === field) {
                     const value = row[column];
@@ -22082,6 +23043,96 @@ _Compartilhado via Sistema CSF_`;
                     return value !== undefined ? value : null;
                 }
             }
+            
+            // Se não encontrou mapeamento explícito, tentar buscar por nome similar na linha
+            // Isso ajuda quando campos customizados não foram mapeados manualmente
+            const fieldLower = field.toLowerCase().trim();
+            
+            // Verificar se é um campo de telefone/contato
+            const isPhoneField = fieldLower.includes('telefone') || fieldLower.includes('phone') || 
+                                fieldLower.includes('contato') || fieldLower.includes('contact') ||
+                                fieldLower.includes('whatsapp') || fieldLower.includes('celular');
+            
+            // Extrair palavras-chave do nome do campo (remover palavras comuns como "de", "do", "da")
+            const fieldWords = fieldLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+            
+            // Se for campo de telefone, adicionar palavras-chave específicas
+            if (isPhoneField) {
+                fieldWords.push('telefone', 'phone', 'contato', 'contact');
+                if (fieldLower.includes('demandante')) {
+                    fieldWords.push('demandante');
+                }
+            }
+            
+            for (const [columnName, columnValue] of Object.entries(row)) {
+                if (columnValue === null || columnValue === undefined || columnValue === '') {
+                    continue;
+                }
+                
+                const columnLower = columnName.toLowerCase().trim();
+                
+                // Match exato (ignorando case e espaços)
+                if (columnLower === fieldLower) {
+                    if (isDevelopment) {
+                        safeLog(`Match exato encontrado: coluna "${columnName}" -> campo "${field}" = "${columnValue}"`);
+                    }
+                    return columnValue;
+                }
+                
+                // Para campos de telefone, fazer busca mais flexível
+                if (isPhoneField) {
+                    const columnIsPhone = columnLower.includes('telefone') || columnLower.includes('phone') || 
+                                         columnLower.includes('contato') || columnLower.includes('contact') ||
+                                         columnLower.includes('whatsapp') || columnLower.includes('celular');
+                    
+                    if (columnIsPhone) {
+                        // Se ambos são campos de telefone, verificar se têm palavras-chave em comum
+                        const columnWords = columnLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+                        const hasCommonKeywords = fieldWords.some(fw => 
+                            columnWords.some(cw => cw.includes(fw) || fw.includes(cw))
+                        );
+                        
+                        if (hasCommonKeywords) {
+                            if (isDevelopment) {
+                                safeLog(`Match telefone encontrado: coluna "${columnName}" -> campo "${field}" = "${columnValue}"`);
+                            }
+                            return columnValue;
+                        }
+                    }
+                }
+                
+                // Match por palavras-chave - útil para nomes compostos
+                // Ex: "telefone de contato" pode corresponder a "telefone contato", "contato telefone", etc.
+                if (fieldWords.length > 0) {
+                    const columnWords = columnLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+                    
+                    // Verificar se todas as palavras-chave do campo estão presentes na coluna
+                    const allWordsMatch = fieldWords.length > 0 && fieldWords.every(fw => 
+                        columnWords.some(cw => cw.includes(fw) || fw.includes(cw))
+                    );
+                    
+                    if (allWordsMatch) {
+                        if (isDevelopment) {
+                            safeLog(`Match por palavras-chave encontrado: coluna "${columnName}" -> campo "${field}" = "${columnValue}"`);
+                        }
+                        return columnValue;
+                    }
+                }
+                
+                // Match parcial - verificar se o nome da coluna contém o nome do campo ou vice-versa
+                // Isso ajuda com campos como "nome do demandante" mapeando para "demandante"
+                if (columnLower.includes(fieldLower) || fieldLower.includes(columnLower)) {
+                    // Verificar se não é um match muito genérico (evitar falsos positivos)
+                    const minLength = Math.min(columnLower.length, fieldLower.length);
+                    if (minLength >= 3) { // Apenas se ambos tiverem pelo menos 3 caracteres
+                        if (isDevelopment) {
+                            safeLog(`Match parcial encontrado: coluna "${columnName}" -> campo "${field}" = "${columnValue}"`);
+                        }
+                        return columnValue;
+                    }
+                }
+            }
+            
             // Log para debug se não encontrou mapeamento
             if (isDevelopment) {
                 safeWarn(`Campo "${field}" não encontrado no mapeamento. Mapeamento atual:`, excelColumnMapping);
@@ -22877,16 +23928,78 @@ _Compartilhado via Sistema CSF_`;
             // Adicionar campos customizados do formulário
             currentFormFields.forEach(field => {
                 if (field.enabled && field.key && !curso.hasOwnProperty(field.key)) {
-                    const value = getMappedValue(row, field.key);
-                    if (value !== null && value !== undefined) {
+                    // Tentar buscar pelo key primeiro
+                    let value = getMappedValue(row, field.key);
+                    
+                    // Se não encontrou pelo key, tentar buscar pelo nome do campo
+                    // Isso ajuda quando a coluna do Excel tem o nome completo do campo
+                    if ((value === null || value === undefined || value === '') && field.name) {
+                        value = getMappedValue(row, field.name);
+                    }
+                    
+                    // Se ainda não encontrou e é um campo de telefone, fazer busca mais agressiva
+                    if ((value === null || value === undefined || value === '') && 
+                        (field.type === 'tel' || field.key.toLowerCase().includes('telefone') || 
+                         field.key.toLowerCase().includes('phone') || field.key.toLowerCase().includes('contato') ||
+                         (field.name && (field.name.toLowerCase().includes('telefone') || field.name.toLowerCase().includes('contato'))))) {
+                        
+                        // Buscar diretamente nas colunas por palavras-chave de telefone
+                        for (const [columnName, columnValue] of Object.entries(row)) {
+                            if (columnValue === null || columnValue === undefined || columnValue === '') {
+                                continue;
+                            }
+                            
+                            const columnLower = columnName.toLowerCase().trim();
+                            const fieldNameLower = (field.name || '').toLowerCase();
+                            const fieldKeyLower = field.key.toLowerCase();
+                            
+                            // Verificar se a coluna contém palavras-chave de telefone/contato
+                            const columnHasPhone = columnLower.includes('telefone') || columnLower.includes('phone') || 
+                                                  columnLower.includes('contato') || columnLower.includes('contact') ||
+                                                  columnLower.includes('whatsapp') || columnLower.includes('celular');
+                            
+                            if (columnHasPhone) {
+                                // Verificar se também tem "demandante" se o campo tiver
+                                const fieldHasDemandante = fieldNameLower.includes('demandante') || fieldKeyLower.includes('demandante');
+                                const columnHasDemandante = columnLower.includes('demandante');
+                                
+                                // Se ambos têm ou não têm "demandante", considerar match
+                                if (fieldHasDemandante === columnHasDemandante) {
+                                    value = columnValue;
+                                    if (isDevelopment) {
+                                        safeLog(`Campo telefone encontrado por busca direta: coluna "${columnName}" -> campo "${field.name}" (${field.key}) = "${value}"`);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (value !== null && value !== undefined && value !== '') {
                         // Processar valor baseado no tipo do campo
                         if (field.type === 'number') {
                             curso[field.key] = parseInt(value) || 0;
                         } else if (field.type === 'date') {
                             curso[field.key] = formatExcelDate(value) || '';
+                        } else if (field.type === 'tel' || 
+                                  field.key.toLowerCase().includes('telefone') || 
+                                  field.key.toLowerCase().includes('phone') || 
+                                  field.key.toLowerCase().includes('contato')) {
+                            // Para campos de telefone, preservar como string mesmo se vier como número
+                            if (typeof value === 'number') {
+                                curso[field.key] = String(value);
+                            } else {
+                                curso[field.key] = String(value).trim();
+                            }
                         } else {
                             curso[field.key] = String(value).trim();
                         }
+                        
+                        if (isDevelopment) {
+                            safeLog(`Campo customizado "${field.name}" (${field.key}) importado: "${curso[field.key]}"`);
+                        }
+                    } else if (isDevelopment) {
+                        safeWarn(`Campo customizado "${field.name}" (${field.key}) não foi encontrado na linha. Colunas disponíveis:`, Object.keys(row));
                     }
                 }
             });
@@ -22896,15 +24009,160 @@ _Compartilhado via Sistema CSF_`;
             Object.keys(row).forEach(columnName => {
                 // Verificar se a coluna foi mapeada para algum campo
                 const mappedField = excelColumnMapping[columnName];
+                const columnValue = row[columnName];
                 
-                // Se a coluna não foi mapeada OU foi mapeada mas o valor não foi processado
-                if (!mappedField && row[columnName] !== null && row[columnName] !== undefined && row[columnName] !== '') {
-                    // Verificar se já não existe no curso com o nome da coluna original
-                    if (!curso.hasOwnProperty(columnName)) {
+                // Pular se o valor estiver vazio
+                if (columnValue === null || columnValue === undefined || columnValue === '') {
+                    return;
+                }
+                
+                // Se a coluna foi mapeada, o valor já deve estar no curso
+                // Mas vamos verificar se realmente está para garantir
+                if (mappedField) {
+                    // Se o campo mapeado não está no curso ou está vazio, tentar adicionar
+                    if (!curso.hasOwnProperty(mappedField) || !curso[mappedField] || curso[mappedField] === '') {
+                        const value = String(columnValue).trim();
+                        if (value) {
+                            // Verificar se é um campo customizado para aplicar processamento adequado
+                            const customField = currentFormFields.find(f => f.key === mappedField);
+                            if (customField) {
+                                if (customField.type === 'number') {
+                                    curso[mappedField] = parseInt(value) || 0;
+                                } else if (customField.type === 'date') {
+                                    curso[mappedField] = formatExcelDate(value) || '';
+                                } else {
+                                    curso[mappedField] = value;
+                                }
+                            } else {
+                                curso[mappedField] = value;
+                            }
+                        }
+                    }
+                } else {
+                    // Se a coluna não foi mapeada, tentar encontrar um campo customizado correspondente
+                    const columnLower = columnName.toLowerCase().trim();
+                    const columnWords = columnLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+                    
+                    // Verificar se a coluna parece ser um campo de telefone/contato
+                    const columnIsPhone = columnLower.includes('telefone') || columnLower.includes('phone') || 
+                                         columnLower.includes('contato') || columnLower.includes('contact') ||
+                                         columnLower.includes('whatsapp') || columnLower.includes('celular');
+                    
+                    let foundCustomField = false;
+                    
+                    // Procurar em campos customizados por nome similar
+                    for (const customField of currentFormFields) {
+                        if (!customField.enabled || !customField.key) continue;
+                        
+                        // Se o campo já foi preenchido, pular
+                        if (curso.hasOwnProperty(customField.key) && curso[customField.key] && curso[customField.key] !== '') {
+                            continue;
+                        }
+                        
+                        const fieldNameLower = (customField.name || '').toLowerCase().trim();
+                        const fieldKeyLower = customField.key.toLowerCase().trim();
+                        
+                        // Verificar se é um campo de telefone
+                        const fieldIsPhone = customField.type === 'tel' || 
+                                            fieldKeyLower.includes('telefone') || fieldKeyLower.includes('phone') || 
+                                            fieldKeyLower.includes('contato') || fieldKeyLower.includes('contact') ||
+                                            fieldNameLower.includes('telefone') || fieldNameLower.includes('phone') || 
+                                            fieldNameLower.includes('contato') || fieldNameLower.includes('contact');
+                        
+                        // Se ambos são campos de telefone, fazer match mais específico
+                        if (columnIsPhone && fieldIsPhone) {
+                            const columnHasDemandante = columnLower.includes('demandante');
+                            const fieldHasDemandante = fieldNameLower.includes('demandante') || fieldKeyLower.includes('demandante');
+                            
+                            // Se ambos têm ou não têm "demandante", considerar match
+                            if (columnHasDemandante === fieldHasDemandante) {
+                                // Para telefones, preservar como string mesmo se vier como número
+                                let value;
+                                if (typeof columnValue === 'number') {
+                                    value = String(columnValue);
+                                } else {
+                                    value = String(columnValue || '').trim();
+                                }
+                                if (value) {
+                                    curso[customField.key] = value;
+                                    foundCustomField = true;
+                                    if (isDevelopment) {
+                                        safeLog(`Campo telefone encontrado automaticamente (match telefone): "${columnName}" -> "${customField.key}" (${customField.name}) = "${value}"`);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Extrair palavras-chave do nome e key do campo customizado
+                        const fieldNameWords = fieldNameLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+                        const fieldKeyWords = fieldKeyLower.split(/[\s_\-]+/).filter(w => w.length >= 3 && !['de', 'do', 'da', 'dos', 'das'].includes(w));
+                        
+                        // Verificar match exato
+                        let isMatch = columnLower === fieldNameLower || columnLower === fieldKeyLower;
+                        
+                        // Verificar match por palavras-chave (útil para nomes compostos)
+                        if (!isMatch && columnWords.length > 0) {
+                            // Verificar se todas as palavras-chave da coluna estão no nome do campo
+                            const allColumnWordsMatch = columnWords.every(cw => 
+                                fieldNameWords.some(fw => fw.includes(cw) || cw.includes(fw)) ||
+                                fieldKeyWords.some(fw => fw.includes(cw) || cw.includes(fw))
+                            );
+                            
+                            // Verificar se todas as palavras-chave do campo estão na coluna
+                            const allFieldWordsMatch = fieldNameWords.length > 0 && fieldNameWords.every(fw => 
+                                columnWords.some(cw => cw.includes(fw) || fw.includes(cw))
+                            );
+                            
+                            isMatch = allColumnWordsMatch || allFieldWordsMatch;
+                        }
+                        
+                        // Verificar match parcial (fallback)
+                        if (!isMatch) {
+                            isMatch = columnLower.includes(fieldNameLower) || 
+                                     fieldNameLower.includes(columnLower) ||
+                                     columnLower.includes(fieldKeyLower) || 
+                                     fieldKeyLower.includes(columnLower);
+                        }
+                        
+                        if (isMatch) {
+                            // Se o campo ainda não foi preenchido, preencher agora
+                            if (!curso.hasOwnProperty(customField.key) || !curso[customField.key] || curso[customField.key] === '') {
+                                // Para telefones, preservar como string mesmo se vier como número
+                                let value;
+                                if (fieldIsPhone && typeof columnValue === 'number') {
+                                    value = String(columnValue);
+                                } else {
+                                    value = String(columnValue || '').trim();
+                                }
+                                
+                                if (value) {
+                                    if (customField.type === 'number') {
+                                        curso[customField.key] = parseInt(value) || 0;
+                                    } else if (customField.type === 'date') {
+                                        curso[customField.key] = formatExcelDate(value) || '';
+                                    } else {
+                                        curso[customField.key] = value;
+                                    }
+                                    foundCustomField = true;
+                                    if (isDevelopment) {
+                                        safeLog(`Campo customizado encontrado automaticamente: "${columnName}" -> "${customField.key}" (${customField.name}) = "${value}"`);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Se não encontrou campo customizado correspondente, adicionar como campo adicional
+                    if (!foundCustomField && !curso.hasOwnProperty(columnName)) {
                         // Adicionar como campo adicional (sanitizado)
                         const sanitizedKey = columnName.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
                         if (sanitizedKey && !curso.hasOwnProperty(sanitizedKey)) {
-                            curso[sanitizedKey] = String(row[columnName]).trim();
+                            curso[sanitizedKey] = String(columnValue).trim();
+                            if (isDevelopment) {
+                                safeLog(`Campo adicional preservado: "${columnName}" -> "${sanitizedKey}" = "${columnValue}"`);
+                            }
                         }
                     }
                 }
@@ -24515,9 +25773,19 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
             'numbers', 'pin', 'confirmation_number', 'badge'
         ];
 
-        // Estado
+        // Estado - Será carregado do Firebase ou localStorage
         let formFields = JSON.parse(localStorage.getItem('formFields')) || [...defaultFormFields];
         let cardFields = JSON.parse(localStorage.getItem('cardFields')) || [...defaultCardFields];
+        
+        // Função para inicializar campos (chamada após carregar do Firebase)
+        function initializeFields() {
+            if (typeof formFields === 'undefined' || !Array.isArray(formFields)) {
+                formFields = JSON.parse(localStorage.getItem('formFields')) || [...defaultFormFields];
+            }
+            if (typeof cardFields === 'undefined' || !Array.isArray(cardFields)) {
+                cardFields = JSON.parse(localStorage.getItem('cardFields')) || [...defaultCardFields];
+            }
+        }
         let editingFieldId = null;
         let editingFormFieldId = null;
         let dragFieldItem = null;
@@ -25102,8 +26370,25 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
             showToast('Campo excluído!', 'success');
         }
 
-        function saveFormFields() {
+        async function saveFormFields() {
+            // Salvar no localStorage
             localStorage.setItem('formFields', JSON.stringify(formFields));
+            
+            // Salvar no Firebase para sincronização entre dispositivos
+            if (firebaseAvailable && typeof db !== 'undefined') {
+                try {
+                    await db.collection('settings').doc('formFields').set({
+                        fields: formFields,
+                        updatedAt: new Date().toISOString(),
+                        updatedBy: currentUser?.id || 'system'
+                    });
+                    if (isDevelopment) {
+                        safeLog('formFields salvo no Firebase');
+                    }
+                } catch (error) {
+                    safeError('Erro ao salvar formFields no Firebase:', error);
+                }
+            }
         }
 
         // Drag and drop para formulário
@@ -25246,8 +26531,26 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
             }
         }
 
-        function saveCardFields() {
+        async function saveCardFields() {
+            // Salvar no localStorage
             localStorage.setItem('cardFields', JSON.stringify(cardFields));
+            
+            // Salvar no Firebase para sincronização entre dispositivos
+            if (firebaseAvailable && typeof db !== 'undefined') {
+                try {
+                    await db.collection('settings').doc('cardFields').set({
+                        fields: cardFields,
+                        updatedAt: new Date().toISOString(),
+                        updatedBy: currentUser?.id || 'system'
+                    });
+                    if (isDevelopment) {
+                        safeLog('cardFields salvo no Firebase');
+                    }
+                } catch (error) {
+                    safeError('Erro ao salvar cardFields no Firebase:', error);
+                }
+            }
+            
             // Atualizar todos os cards imediatamente após salvar
             if (document.getElementById('coursesPage')?.classList.contains('active')) {
                 renderCoursesByLote();
@@ -25263,6 +26566,12 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
             enabledFields.forEach(field => {
                 let value = '';
                 let displayValue = '';
+                let extraContent = '';
+                
+                // Ignorar campos de sistema que não devem aparecer nos cards
+                if (field.key === 'createdAt' || field.key === 'updatedAt' || field.key === 'id') {
+                    return;
+                }
                 
                 if (field.isComputed) {
                     // Campo computado (período)
@@ -25281,6 +26590,34 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
                     // Campo direto do curso
                     value = course[field.key] || '';
                     displayValue = value;
+                    
+                    // Detectar se é campo de telefone/contato e adicionar botão WhatsApp
+                    const fieldKeyLower = field.key.toLowerCase();
+                    const fieldNameLower = (field.name || '').toLowerCase();
+                    const isPhoneField = field.type === 'tel' || 
+                                        fieldKeyLower.includes('telefone') || 
+                                        fieldKeyLower.includes('phone') || 
+                                        fieldKeyLower.includes('contato') || 
+                                        fieldKeyLower.includes('contact') ||
+                                        fieldKeyLower.includes('whatsapp') ||
+                                        fieldKeyLower.includes('celular') ||
+                                        fieldKeyLower.includes('mobile') ||
+                                        fieldNameLower.includes('telefone') || 
+                                        fieldNameLower.includes('phone') || 
+                                        fieldNameLower.includes('contato') || 
+                                        fieldNameLower.includes('contact') ||
+                                        fieldNameLower.includes('whatsapp') ||
+                                        fieldNameLower.includes('celular') ||
+                                        fieldNameLower.includes('mobile');
+                    
+                    if (isPhoneField && value) {
+                        // Remover caracteres não numéricos
+                        const phone = String(value).replace(/\D/g, '');
+                        // Validar se tem pelo menos 10 dígitos (formato brasileiro mínimo)
+                        if (phone.length >= 10) {
+                            extraContent = '<button class="btn-whatsapp-mini" onclick="event.stopPropagation(); openWhatsApp(\'' + phone + '\')" title="WhatsApp"><span class="material-icons">chat</span></button>';
+                        }
+                    }
                     
                     // Formatação especial para alguns campos
                     if (field.key === 'alunos' || field.key === 'concludentes') {
@@ -25301,11 +26638,15 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
                     html += `
                         <div class="course-info-item">
                             <span class="material-icons">${field.icon || 'info'}</span>
-                            ${escapeHtml(String(displayValue))}
+                            ${escapeHtml(String(displayValue))}${extraContent}
                         </div>
                     `;
                 }
             });
+            
+            // NÃO renderizar campos extras automaticamente
+            // Todos os campos devem estar configurados e habilitados no gerenciador de cards
+            // Isso garante que apenas os campos desejados sejam exibidos
             
             // Sempre mostrar anotação se existir (independente de estar configurada)
             if (course.nota) {
@@ -25374,6 +26715,15 @@ ${excelImportReport.errors.map(err => `Linha ${err.line}: ${err.message}${err.cu
         function getEnabledCardFields() {
             return cardFields
                 .filter(f => f.enabled)
+                .filter(f => {
+                    // Filtrar campos de sistema que não devem aparecer nos cards
+                    const keyLower = (f.key || '').toLowerCase();
+                    return keyLower !== 'createdat' && 
+                           keyLower !== 'updatedat' && 
+                           keyLower !== 'id' &&
+                           !keyLower.includes('created_at') &&
+                           !keyLower.includes('updated_at');
+                })
                 .sort((a, b) => a.order - b.order);
         }
 
