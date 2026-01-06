@@ -13554,16 +13554,45 @@ _Compartilhado via Sistema CSF_`;
                         }
                     }
                     
-                    // Buscar telefone do demandante (campos com telefone/contato e demandante, ou apenas contato)
+                    // Buscar telefone do demandante - busca mais flexível e abrangente
                     const isPhoneField = (keyLower.includes('telefone') || keyLower.includes('contato') || 
                                          keyLower.includes('phone') || keyLower.includes('whatsapp') || 
                                          keyLower.includes('celular') || keyLower.includes('mobile'));
                     const hasDemandante = keyLower.includes('demandante');
                     const isContactField = keyLower.includes('contato');
                     
-                    if (isPhoneField && (hasDemandante || isContactField)) {
-                        if (!demandanteTelefone) {
-                            demandanteTelefone = String(value).trim();
+                    // Verificar se o curso tem campo de demandante (nome)
+                    const cursoHasDemandante = Object.keys(curso).some(k => {
+                        const kLower = k.toLowerCase();
+                        return kLower.includes('demandante') && 
+                               !kLower.includes('telefone') && 
+                               !kLower.includes('contato') &&
+                               !kLower.includes('phone');
+                    });
+                    
+                    // Aceitar telefone se:
+                    // 1. Campo tem "demandante" e "telefone/contato"
+                    // 2. Campo tem apenas "contato" E o curso tem campo demandante (nome)
+                    // 3. Campo tem "telefone de contato" ou "contato" (sem demandante mas pode ser do demandante se curso tiver demandante)
+                    // 4. Campo tem apenas "telefone" e curso tem demandante (pode ser telefone do demandante)
+                    if (isPhoneField) {
+                        const shouldUsePhone = hasDemandante || 
+                                              (isContactField && cursoHasDemandante) || 
+                                              (keyLower.includes('telefone') && keyLower.includes('contato')) ||
+                                              (keyLower.includes('telefone') && cursoHasDemandante && !keyLower.includes('instrutor'));
+                        
+                        if (shouldUsePhone) {
+                            if (!demandanteTelefone) {
+                                const phoneValue = String(value).trim();
+                                // Validar se parece um telefone (tem pelo menos 10 dígitos - formato brasileiro)
+                                const phoneDigits = phoneValue.replace(/\D/g, '');
+                                if (phoneDigits.length >= 10) {
+                                    demandanteTelefone = phoneValue;
+                                    if (isDevelopment) {
+                                        safeLog(`Telefone do demandante encontrado: campo="${key}", valor="${phoneValue}"`);
+                                    }
+                                }
+                            }
                         }
                     }
                 });
@@ -13572,24 +13601,38 @@ _Compartilhado via Sistema CSF_`;
                 // Mostrar mesmo sem nome se tiver lote (pode ter sido importado sem nome)
                 if (demandanteNome || lote) {
                     const loteKey = lote.toLowerCase();
+                    // Validar telefone antes de adicionar (mínimo 10 dígitos para formato brasileiro)
+                    let validTelefone = '';
+                    if (demandanteTelefone) {
+                        const phoneDigits = demandanteTelefone.replace(/\D/g, '');
+                        if (phoneDigits.length >= 10) {
+                            validTelefone = demandanteTelefone;
+                        }
+                    }
+                    
                     if (!demandantesMap.has(loteKey)) {
                         demandantesMap.set(loteKey, {
                             nome: demandanteNome || `Lote ${lote}`,
-                            telefone: demandanteTelefone,
+                            telefone: validTelefone,
                             lote: lote,
                             isFromCourse: true,
                             id: 'extracted_' + loteKey.replace(/[^a-z0-9]/g, '_')
                         });
                     } else {
-                        // Se já existe, atualizar nome e telefone se não tiver
+                        // Se já existe, atualizar nome e telefone
                         const existing = demandantesMap.get(loteKey);
                         if (!existing.nome || existing.nome === `Lote ${lote}`) {
                             if (demandanteNome) {
                                 existing.nome = demandanteNome;
                             }
                         }
-                        if (!existing.telefone && demandanteTelefone) {
-                            existing.telefone = demandanteTelefone;
+                        // Sempre atualizar telefone se encontrar um nos cursos (priorizar telefones dos cursos)
+                        if (demandanteTelefone) {
+                            // Validar telefone antes de atualizar (mínimo 10 dígitos para formato brasileiro)
+                            const phoneDigits = demandanteTelefone.replace(/\D/g, '');
+                            if (phoneDigits.length >= 10) {
+                                existing.telefone = demandanteTelefone;
+                            }
                         }
                     }
                 }
@@ -13606,14 +13649,26 @@ _Compartilhado via Sistema CSF_`;
             const extractedDemandantes = extractDemandantesFromCourses();
             const allDemandantes = [...demandantes];
             
-            // Adicionar demandantes extraídos que não estão cadastrados
+            // Adicionar demandantes extraídos e atualizar telefones dos existentes
             extractedDemandantes.forEach(extracted => {
-                const exists = demandantes.some(d => {
+                const existingIndex = demandantes.findIndex(d => {
                     const dLote = (d.lote || '').trim().toLowerCase();
                     const eLote = (extracted.lote || '').trim().toLowerCase();
-                    return dLote === eLote;
+                    return dLote === eLote || 
+                           dLote.replace(/[^\d]/g, '') === eLote.replace(/[^\d]/g, '');
                 });
-                if (!exists) {
+                
+                if (existingIndex !== -1) {
+                    // Atualizar telefone do demandante existente se o extraído tiver telefone válido
+                    if (extracted.telefone) {
+                        const phoneDigits = String(extracted.telefone).replace(/\D/g, '');
+                        // Validar se tem pelo menos 10 dígitos (formato brasileiro)
+                        if (phoneDigits.length >= 10) {
+                            allDemandantes[existingIndex].telefone = extracted.telefone;
+                        }
+                    }
+                } else {
+                    // Adicionar novo demandante extraído
                     allDemandantes.push(extracted);
                 }
             });
@@ -13645,8 +13700,20 @@ _Compartilhado via Sistema CSF_`;
                     return false;
                 });
                 
-                const phone = demandante.telefone ? demandante.telefone.replace(/\D/g, '') : '';
-                const canEdit = currentUser?.role !== 'viewer' && !demandante.isFromCourse;
+                // Validar e limpar telefone para exibição
+                let phone = '';
+                let phoneDisplay = demandante.telefone || 'Não informado';
+                if (demandante.telefone) {
+                    phone = String(demandante.telefone).replace(/\D/g, '');
+                    // Validar se tem pelo menos 10 dígitos para considerar válido (formato brasileiro)
+                    if (phone.length < 10) {
+                        phone = '';
+                    } else {
+                        phoneDisplay = demandante.telefone;
+                    }
+                }
+                
+                const canEdit = currentUser?.role !== 'viewer';
                 const cardId = `demandante-card-${demandante.id || index}`;
                 const isExpanded = false; // Iniciar sempre colapsado
                 
@@ -13676,7 +13743,7 @@ _Compartilhado via Sistema CSF_`;
                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.9rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span class="material-icons" style="font-size: 18px;">phone</span>
-                                        <span>${escapeHtml(demandante.telefone || 'Não informado')}</span>
+                                        <span>${escapeHtml(phoneDisplay)}</span>
                                         ${phone && phone.length >= 10 ? `
                                             <button class="btn-whatsapp-mini" onclick="event.stopPropagation(); openWhatsApp('${phone}')" title="WhatsApp">
                                                 <span class="material-icons" style="font-size: 16px;">chat</span>
@@ -13690,15 +13757,6 @@ _Compartilhado via Sistema CSF_`;
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <button class="btn btn-secondary btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `openDemandanteModal('${demandante.id}')` : ''}" title="${canEdit ? 'Editar' : 'Edição não permitida'}">
-                                    <span class="material-icons" style="font-size: 18px;">edit</span>
-                                </button>
-                                <button class="btn btn-danger btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `deleteDemandante('${demandante.id}')` : ''}" title="${canEdit ? 'Excluir' : 'Exclusão não permitida'}">
-                                    <span class="material-icons" style="font-size: 18px;">delete</span>
-                                </button>
-                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); downloadDemandanteDetalhamento('${cardId}', '${escapeHtml(demandante.nome || 'Demandante')}', '${escapeHtml(demandante.lote || 'Lote')}')" title="Baixar Detalhamento (PNG)">
-                                    <span class="material-icons" style="font-size: 18px;">download</span>
-                                </button>
                                 <button class="btn-expand-demandante" onclick="event.stopPropagation(); toggleDemandanteCard('${cardId}')" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0.25rem; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease;" title="Expandir/Recolher">
                                     <span class="material-icons expand-icon" style="font-size: 20px; transition: transform 0.3s ease;">expand_more</span>
                                 </button>
@@ -13707,10 +13765,23 @@ _Compartilhado via Sistema CSF_`;
                         
                         <div class="demandante-cursos" id="${cardId}-cursos" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease; margin-top: 0; opacity: 0;">
                             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                                <h4 style="margin: 0 0 1rem 0; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <span class="material-icons" style="font-size: 20px;">school</span>
-                                    Cursos do Lote (${cursosOrdenados.length})
-                                </h4>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="material-icons" style="font-size: 20px;">school</span>
+                                        Cursos do Lote (${cursosOrdenados.length})
+                                    </h4>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <button class="btn btn-secondary btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `openDemandanteModal('${demandante.id}')` : ''}" title="${canEdit ? 'Editar' : 'Edição não permitida'}">
+                                            <span class="material-icons" style="font-size: 18px;">edit</span>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" ${!canEdit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="event.stopPropagation(); ${canEdit ? `deleteDemandante('${demandante.id}')` : ''}" title="${canEdit ? 'Excluir' : 'Exclusão não permitida'}">
+                                            <span class="material-icons" style="font-size: 18px;">delete</span>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); downloadDemandanteDetalhamento('${cardId}', '${escapeHtml(demandante.nome || 'Demandante')}', '${escapeHtml(demandante.lote || 'Lote')}')" title="Baixar Detalhamento (PNG)">
+                                            <span class="material-icons" style="font-size: 18px;">download</span>
+                                        </button>
+                                    </div>
+                                </div>
                                 ${cursosOrdenados.length > 0 ? `
                                     <div style="display: grid; gap: 0.75rem;">
                                         ${cursosOrdenados.map(curso => {
@@ -16249,8 +16320,9 @@ _Compartilhado via Sistema CSF_`;
                     logActivity('Novo Curso', `Adicionou o curso "${courseData.curso || 'Sem nome'}"`, 'add');
                 }
                 
-                // Sincronizar instrutor do curso
+                // Sincronizar instrutor e demandante do curso
                 await syncInstructorFromCourse(courseData);
+                await syncDemandanteFromCourse(courseData);
                 
                 // Limpar editingCourseId antes de fechar o modal
                 editingCourseId = null;
@@ -16406,6 +16478,178 @@ _Compartilhado via Sistema CSF_`;
             // Aceita formatos: (00) 00000-0000, (00) 0000-0000, 00000000000, etc.
             const cleaned = phone.replace(/\D/g, '');
             return cleaned.length >= 10 && cleaned.length <= 11;
+        }
+        
+        // Sincronizar demandante do curso com a lista de demandantes
+        async function syncDemandanteFromCourse(course) {
+            if (!course) return;
+            
+            const lote = (course.lote || course.loteResponsavel || '').trim();
+            if (!lote) return;
+            
+            // Buscar nome do demandante e telefone nos campos customizados
+            let demandanteNome = '';
+            let demandanteTelefone = '';
+            
+            // Procurar por campos que contenham "demandante" no nome ou key
+            Object.keys(course).forEach(key => {
+                const keyLower = key.toLowerCase();
+                const value = course[key];
+                if (!value) return;
+                
+                // Buscar nome do demandante
+                if (keyLower.includes('demandante') && 
+                    !keyLower.includes('telefone') && 
+                    !keyLower.includes('contato') && 
+                    !keyLower.includes('phone') &&
+                    !keyLower.includes('whatsapp') &&
+                    !keyLower.includes('celular')) {
+                    if (!demandanteNome) {
+                        demandanteNome = String(value).trim();
+                    }
+                }
+                
+                // Buscar telefone do demandante - busca mais flexível e abrangente
+                const isPhoneField = (keyLower.includes('telefone') || keyLower.includes('contato') || 
+                                     keyLower.includes('phone') || keyLower.includes('whatsapp') || 
+                                     keyLower.includes('celular') || keyLower.includes('mobile'));
+                const hasDemandante = keyLower.includes('demandante');
+                const isContactField = keyLower.includes('contato');
+                
+                // Verificar se o curso tem campo de demandante (nome)
+                const courseHasDemandante = Object.keys(course).some(k => {
+                    const kLower = k.toLowerCase();
+                    return kLower.includes('demandante') && 
+                           !kLower.includes('telefone') && 
+                           !kLower.includes('contato') &&
+                           !kLower.includes('phone');
+                });
+                
+                // Aceitar telefone se:
+                // 1. Campo tem "demandante" e "telefone/contato"
+                // 2. Campo tem apenas "contato" E o curso tem campo demandante (nome)
+                // 3. Campo tem "telefone de contato" ou "contato" (sem demandante mas pode ser do demandante se curso tiver demandante)
+                // 4. Campo tem apenas "telefone" e curso tem demandante (pode ser telefone do demandante)
+                if (isPhoneField) {
+                    const shouldUsePhone = hasDemandante || 
+                                          (isContactField && courseHasDemandante) || 
+                                          (keyLower.includes('telefone') && keyLower.includes('contato')) ||
+                                          (keyLower.includes('telefone') && courseHasDemandante && !keyLower.includes('instrutor'));
+                    
+                    if (shouldUsePhone) {
+                        if (!demandanteTelefone) {
+                            const phoneValue = String(value).trim();
+                            // Validar se parece um telefone (tem pelo menos 8 dígitos)
+                            const phoneDigits = phoneValue.replace(/\D/g, '');
+                            // Validar se tem pelo menos 10 dígitos (formato brasileiro)
+                            if (phoneDigits.length >= 10) {
+                                demandanteTelefone = phoneValue;
+                                if (isDevelopment) {
+                                    safeLog(`Telefone do demandante encontrado (sync): campo="${key}", valor="${phoneValue}"`);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            if (!demandanteNome && !demandanteTelefone) return;
+            
+            // Verificar se o demandante já existe (por lote)
+            const loteKey = lote.toLowerCase();
+            const existingDemandante = demandantes.find(d => {
+                const dLote = (d.lote || '').trim().toLowerCase();
+                return dLote === loteKey || 
+                       dLote.replace(/[^\d]/g, '') === loteKey.replace(/[^\d]/g, '');
+            });
+            
+            try {
+                if (existingDemandante) {
+                    // Demandante existe - atualizar nome e telefone
+                    const updatedData = { ...existingDemandante };
+                    let needsUpdate = false;
+                    
+                    if (demandanteNome && (!existingDemandante.nome || existingDemandante.nome === `Lote ${lote}`)) {
+                        updatedData.nome = demandanteNome;
+                        needsUpdate = true;
+                    }
+                    
+                    // Sempre atualizar telefone se encontrar um nos cursos (priorizar telefones dos cursos)
+                    if (demandanteTelefone) {
+                        // Validar telefone antes de atualizar (mínimo 10 dígitos para formato brasileiro)
+                        const phoneDigits = demandanteTelefone.replace(/\D/g, '');
+                        if (phoneDigits.length >= 10) {
+                            updatedData.telefone = demandanteTelefone;
+                            needsUpdate = true;
+                        }
+                    }
+                    
+                    if (needsUpdate) {
+                        if (firebaseAvailable) {
+                            await db.collection('demandantes').doc(existingDemandante.id).update(updatedData);
+                            // Atualizar array local
+                            const index = demandantes.findIndex(d => d.id === existingDemandante.id);
+                            if (index !== -1) {
+                                demandantes[index] = updatedData;
+                            }
+                        } else {
+                            const existingDemandantes = JSON.parse(localStorage.getItem('demandantes') || '[]');
+                            const index = existingDemandantes.findIndex(d => d.id === existingDemandante.id);
+                            if (index !== -1) {
+                                existingDemandantes[index] = updatedData;
+                                localStorage.setItem('demandantes', JSON.stringify(existingDemandantes));
+                            }
+                            // Atualizar array local
+                            const localIndex = demandantes.findIndex(d => d.id === existingDemandante.id);
+                            if (localIndex !== -1) {
+                                demandantes[localIndex] = updatedData;
+                            }
+                        }
+                        
+                        if (isDevelopment) {
+                            safeLog(`Demandante do lote "${lote}" atualizado: nome="${demandanteNome || existingDemandante.nome}", telefone="${demandanteTelefone}"`);
+                        }
+                    }
+                } else {
+                    // Demandante não existe - criar novo apenas se tiver nome
+                    if (demandanteNome) {
+                        const newDemandante = {
+                            nome: demandanteNome,
+                            telefone: demandanteTelefone || '',
+                            lote: lote
+                        };
+                        
+                        if (firebaseAvailable) {
+                            const docRef = await db.collection('demandantes').add(newDemandante);
+                            newDemandante.id = docRef.id;
+                            demandantes.push(newDemandante);
+                        } else {
+                            newDemandante.id = 'demandante_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            const existingDemandantes = JSON.parse(localStorage.getItem('demandantes') || '[]');
+                            existingDemandantes.push(newDemandante);
+                            localStorage.setItem('demandantes', JSON.stringify(existingDemandantes));
+                            demandantes.push(newDemandante);
+                        }
+                        
+                        if (isDevelopment) {
+                            safeLog(`Novo demandante criado automaticamente: "${demandanteNome}" (Lote: ${lote})`);
+                        }
+                    }
+                }
+                
+                // Atualizar renderização de demandantes sempre (mesmo se não estiver na página ativa)
+                // Isso garante que quando a página for aberta, os dados estarão atualizados
+                if (typeof renderDemandantes === 'function') {
+                    // Usar requestAnimationFrame para evitar múltiplas renderizações
+                    requestAnimationFrame(() => {
+                        if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                            renderDemandantes();
+                        }
+                    });
+                }
+            } catch (error) {
+                safeError('Erro ao sincronizar demandante do curso:', error);
+            }
         }
         
         // Sincronizar instrutor do curso com a lista de instrutores
@@ -23867,8 +24111,9 @@ _Compartilhado via Sistema CSF_`;
                                         await addAuditLog('update', 'course', existingCourse.id, 
                                             `Curso atualizado via importação Excel`, oldData, cursoData);
                                         
-                                        // Sincronizar instrutor do curso atualizado
+                                        // Sincronizar instrutor e demandante do curso atualizado
                                         await syncInstructorFromCourse(existingCourse);
+                                        await syncDemandanteFromCourse(existingCourse);
                                         
                                         // Pular para próxima iteração
                                         continue;
@@ -23924,8 +24169,9 @@ _Compartilhado via Sistema CSF_`;
                                 }
                             }
                             
-                            // Sincronizar instrutor do curso
+                            // Sincronizar instrutor e demandante do curso
                             await syncInstructorFromCourse(cursoData);
+                            await syncDemandanteFromCourse(cursoData);
                             
                             excelImportReport.imported++;
                             excelImportReport.importedList.push({
