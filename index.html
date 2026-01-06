@@ -16249,6 +16249,9 @@ _Compartilhado via Sistema CSF_`;
                     logActivity('Novo Curso', `Adicionou o curso "${courseData.curso || 'Sem nome'}"`, 'add');
                 }
                 
+                // Sincronizar instrutor do curso
+                await syncInstructorFromCourse(courseData);
+                
                 // Limpar editingCourseId antes de fechar o modal
                 editingCourseId = null;
                 closeModal('courseModal');
@@ -16403,6 +16406,109 @@ _Compartilhado via Sistema CSF_`;
             // Aceita formatos: (00) 00000-0000, (00) 0000-0000, 00000000000, etc.
             const cleaned = phone.replace(/\D/g, '');
             return cleaned.length >= 10 && cleaned.length <= 11;
+        }
+        
+        // Sincronizar instrutor do curso com a lista de instrutores
+        async function syncInstructorFromCourse(course) {
+            if (!course || !course.instrutor) return;
+            
+            const instructorName = course.instrutor.trim();
+            if (!instructorName) return;
+            
+            // Buscar telefone do instrutor nos campos do curso
+            let instructorPhone = '';
+            
+            // Procurar por campos que contenham "instrutor" e "telefone" ou "contato"
+            Object.keys(course).forEach(key => {
+                const keyLower = key.toLowerCase();
+                if ((keyLower.includes('instrutor') && (keyLower.includes('telefone') || keyLower.includes('contato') || keyLower.includes('phone'))) ||
+                    (keyLower.includes('telefone') && keyLower.includes('instrutor')) ||
+                    (keyLower.includes('contato') && keyLower.includes('instrutor'))) {
+                    if (!instructorPhone && course[key]) {
+                        instructorPhone = String(course[key]).trim();
+                    }
+                }
+            });
+            
+            // Verificar se o instrutor já existe (comparação case-insensitive)
+            const existingInstructor = instrutores.find(i => 
+                i.nome && i.nome.trim().toLowerCase() === instructorName.toLowerCase()
+            );
+            
+            try {
+                if (existingInstructor) {
+                    // Instrutor existe - atualizar telefone se não tiver e o curso tiver
+                    if (instructorPhone && (!existingInstructor.telefone || existingInstructor.telefone.trim() === '')) {
+                        const updatedData = {
+                            ...existingInstructor,
+                            telefone: instructorPhone
+                        };
+                        
+                        if (firebaseAvailable) {
+                            await db.collection('instrutores').doc(existingInstructor.id).update({ telefone: instructorPhone });
+                            // Atualizar array local
+                            const index = instrutores.findIndex(i => i.id === existingInstructor.id);
+                            if (index !== -1) {
+                                instrutores[index] = updatedData;
+                            }
+                        } else {
+                            const existingInstructors = JSON.parse(localStorage.getItem('instrutores') || '[]');
+                            const index = existingInstructors.findIndex(i => i.id === existingInstructor.id);
+                            if (index !== -1) {
+                                existingInstructors[index] = updatedData;
+                                localStorage.setItem('instrutores', JSON.stringify(existingInstructors));
+                            }
+                            // Atualizar array local
+                            const localIndex = instrutores.findIndex(i => i.id === existingInstructor.id);
+                            if (localIndex !== -1) {
+                                instrutores[localIndex] = updatedData;
+                            }
+                        }
+                        
+                        if (isDevelopment) {
+                            safeLog(`Telefone do instrutor "${instructorName}" atualizado: ${instructorPhone}`);
+                        }
+                    }
+                } else {
+                    // Instrutor não existe - criar novo
+                    const newInstructor = {
+                        nome: instructorName,
+                        telefone: instructorPhone || '',
+                        especialidade: '',
+                        email: ''
+                    };
+                    
+                    if (firebaseAvailable) {
+                        const docRef = await db.collection('instrutores').add(newInstructor);
+                        newInstructor.id = docRef.id;
+                        instrutores.push(newInstructor);
+                    } else {
+                        newInstructor.id = 'instructor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        const existingInstructors = JSON.parse(localStorage.getItem('instrutores') || '[]');
+                        existingInstructors.push(newInstructor);
+                        localStorage.setItem('instrutores', JSON.stringify(existingInstructors));
+                        instrutores.push(newInstructor);
+                    }
+                    
+                    if (isDevelopment) {
+                        safeLog(`Novo instrutor criado automaticamente: "${instructorName}"`);
+                    }
+                }
+                
+                // Atualizar select de instrutores se estiver na página de cursos
+                if (typeof updateInstructorSelect === 'function') {
+                    updateInstructorSelect();
+                }
+                
+                // Atualizar renderização de instrutores se estiver na página ativa
+                if (document.getElementById('instructorsPage')?.classList.contains('active')) {
+                    if (typeof renderInstructors === 'function') {
+                        renderInstructors();
+                    }
+                }
+            } catch (error) {
+                safeError('Erro ao sincronizar instrutor do curso:', error);
+            }
         }
 
         async function handleQuickInstructorSubmit(e) {
@@ -23761,6 +23867,9 @@ _Compartilhado via Sistema CSF_`;
                                         await addAuditLog('update', 'course', existingCourse.id, 
                                             `Curso atualizado via importação Excel`, oldData, cursoData);
                                         
+                                        // Sincronizar instrutor do curso atualizado
+                                        await syncInstructorFromCourse(existingCourse);
+                                        
                                         // Pular para próxima iteração
                                         continue;
                                     }
@@ -23814,6 +23923,9 @@ _Compartilhado via Sistema CSF_`;
                                     cursos.push(cursoData);
                                 }
                             }
+                            
+                            // Sincronizar instrutor do curso
+                            await syncInstructorFromCourse(cursoData);
                             
                             excelImportReport.imported++;
                             excelImportReport.importedList.push({
