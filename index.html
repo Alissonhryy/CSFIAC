@@ -19,7 +19,6 @@
     <title>CSF + Qualificação e Renda</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
     <!-- Adicionando SheetJS para leitura de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Adicionando Chart.js para gráfico pizza -->
@@ -28,8 +27,8 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- JSZip para download de múltiplos arquivos -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <!-- CSS removido - estilos estão em css/styles.css -->
-    <!-- Todo o CSS foi movido para css/styles.css para melhor organização e performance -->
+    <style>
+        :root {
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --primary-light: rgba(99, 102, 241, 0.1);
@@ -11177,74 +11176,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
-    <!-- Application Scripts - Carregar na ordem correta -->
-    <script src="Config/firebase.config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/error-handler.js"></script>
-    <script src="js/password-validator.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/firebase.init.js"></script>
-    <script src="js/login.js"></script>
-    <script src="js/sync-manager.js"></script>
-    <script src="js/calendar-improvements.js"></script>
-    <script src="js/task-mentions.js"></script>
-    <script src="js/keyboard-shortcuts-manager.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase.config.js"></script>
+    <script src="firebase.init.js"></script>
 
     <script>
-        // Firebase já foi inicializado em firebase.init.js
-        // Usar window.db, window.storage, window.firebaseAvailable diretamente
-        // Não declarar variáveis locais 'const db' para evitar conflitos
-        
-        // Função helper para obter db (usa window.db sempre)
-        function getDb() {
-            return window.db;
-        }
-        
-        function getStorage() {
-            return window.storage;
-        }
-        
-        // Criar alias 'db' que aponta para window.db
-        // Isso permite usar 'db.' no código existente sem mudanças
-        // Usar Object.defineProperty para criar getter dinâmico
-        if (typeof window !== 'undefined') {
-            // Criar variável local db como getter
-            Object.defineProperty(window, '_localDb', {
-                get: function() { return window.db; },
-                configurable: true
-            });
-        }
-        
-        // Para uso imediato, criar variável que será atualizada
-        // Mas não usar const para evitar erro de redeclaração
-        var db;
-        var storage;
-        
-        // Atualizar valores quando window.* estiver disponível
-        function updateDbReferences() {
-            db = window.db;
-            storage = window.storage;
-        }
-        
-        // Atualizar imediatamente se já disponível
-        if (typeof window.db !== 'undefined') {
-            updateDbReferences();
-        }
-        
-        // Atualizar após um pequeno delay para garantir que firebase.init.js executou
-        setTimeout(updateDbReferences, 100);
-        
-        let firebaseAvailable = false;
-        let storageAvailable = false;
-        
-        if (typeof window.firebaseAvailable !== 'undefined') {
-            firebaseAvailable = window.firebaseAvailable;
-        }
-        if (typeof window.storageAvailable !== 'undefined') {
-            storageAvailable = window.storageAvailable;
-        }
-
         // ==================== FUNÇÕES DE SEGURANÇA ====================
         // Função para sanitizar strings e prevenir XSS
         function escapeHtml(text) {
@@ -11688,23 +11625,8 @@
         }
 
         async function initializeApp() {
-            // Atualizar referências db antes de usar
-            updateDbReferences();
-            
-            // Usar window.db ou db (que agora aponta para window.db)
-            const dbInstance = window.db || db;
-            
-            if (!dbInstance) {
-                safeWarn('Firebase não disponível, usando localStorage');
-                window.firebaseAvailable = false;
-                firebaseAvailable = false;
-                initializeLocalStorage();
-                return;
-            }
-            
             try {
-                await dbInstance.collection('_test_connection').doc('test').get();
-                window.firebaseAvailable = true;
+                await db.collection('_test_connection').doc('test').get();
                 firebaseAvailable = true;
                 safeLog('Firebase conectado com sucesso!');
                 await initializeUsers();
@@ -11713,7 +11635,6 @@
                 setupSettingsSync();
             } catch (error) {
                 safeWarn('Firebase não disponível, usando localStorage:', error.message);
-                window.firebaseAvailable = false;
                 firebaseAvailable = false;
                 initializeLocalStorage();
             }
@@ -12189,11 +12110,6 @@
                 if (document.getElementById('securityCard')) document.getElementById('securityCard').style.display = 'none';
                 if (document.getElementById('importInstructorsBtn')) document.getElementById('importInstructorsBtn').style.display = 'none';
             }
-            
-            // Inicializar sincronização Firebase após login
-            if (typeof syncManager !== 'undefined' && firebaseAvailable) {
-                syncManager.initialize();
-            }
 
             if (currentUser.role === 'viewer') {
                 document.getElementById('newCourseBtn').style.display = 'none';
@@ -12389,6 +12305,12 @@
                 
                 // Carregar cursos em tempo real (para atualizar calendário automaticamente)
                 setupCoursesListener();
+                
+                // Carregar instrutores em tempo real
+                setupInstructorsListener();
+                
+                // Carregar demandantes em tempo real
+                setupDemandantesListener();
             } else {
                 loadFromLocalStorage();
             }
@@ -14441,6 +14363,112 @@ _Compartilhado via Sistema CSF_`;
             });
         }
         
+        // Listener para instrutores
+        let instructorsListener = null;
+        function setupInstructorsListener() {
+            if (instructorsListener) {
+                instructorsListener();
+            }
+            
+            if (!firebaseAvailable) {
+                return;
+            }
+            
+            instructorsListener = db.collection('instrutores').onSnapshot(snapshot => {
+                const updatedInstructors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Verificar se há mudanças
+                const hasChanges = JSON.stringify(updatedInstructors) !== JSON.stringify(JSON.parse(localStorage.getItem('instrutores') || '[]'));
+                if (hasChanges) {
+                    localStorage.setItem('instrutores', JSON.stringify(updatedInstructors));
+                    
+                    // Se a página de instrutores estiver ativa, atualizar
+                    if (document.getElementById('instructorsPage')?.classList.contains('active')) {
+                        if (typeof renderInstructors === 'function') {
+                            renderInstructors();
+                        }
+                    }
+                }
+            }, error => {
+                safeError('Erro ao carregar instrutores em tempo real:', error);
+            });
+        }
+        
+        // Listener para demandantes
+        let demandantesListener = null;
+        function setupDemandantesListener() {
+            if (demandantesListener) {
+                demandantesListener();
+            }
+            
+            if (!firebaseAvailable) {
+                return;
+            }
+            
+            demandantesListener = db.collection('demandantes').onSnapshot(snapshot => {
+                demandantes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Se a página de demandantes estiver ativa, atualizar
+                if (document.getElementById('demandantesPage')?.classList.contains('active')) {
+                    if (typeof renderDemandantes === 'function') {
+                        renderDemandantes();
+                    }
+                }
+                
+                // Atualizar dashboard também se estiver ativo
+                if (document.getElementById('dashboardPage')?.classList.contains('active')) {
+                    if (typeof updateDashboard === 'function') {
+                        updateDashboard();
+                    }
+                }
+            }, error => {
+                safeError('Erro ao carregar demandantes em tempo real:', error);
+            });
+        }
+        
+        // Função para criar notificação no Firebase
+        async function createNotification(notificationData) {
+            if (!firebaseAvailable) {
+                // Salvar no localStorage como fallback
+                const notifications = JSON.parse(localStorage.getItem(`notifications_${notificationData.userId}`) || '[]');
+                notifications.push({ ...notificationData, id: 'notif-' + Date.now() });
+                localStorage.setItem(`notifications_${notificationData.userId}`, JSON.stringify(notifications));
+                return { ...notificationData, id: 'notif-' + Date.now() };
+            }
+            
+            try {
+                const notificationRef = db.collection('notifications').doc();
+                const notification = {
+                    id: notificationRef.id,
+                    ...notificationData,
+                    createdAt: notificationData.createdAt || new Date().toISOString()
+                };
+                
+                await notificationRef.set(notification);
+                
+                // Enviar notificação do navegador se permitido
+                if ('Notification' in window && Notification.permission === 'granted' && typeof sendNativeNotification === 'function') {
+                    sendNativeNotification(notificationData.title, notificationData.message, {
+                        icon: '/icon-192x192.png',
+                        badge: '/icon-192x192.png',
+                        tag: notificationData.taskId || 'notification',
+                        data: { notificationId: notification.id, taskId: notificationData.taskId }
+                    });
+                }
+                
+                safeLog('✅ Notificação criada:', notification.id);
+                return notification;
+            } catch (error) {
+                safeError('Erro ao criar notificação no Firebase:', error);
+                throw error;
+            }
+        }
+        
+        // Tornar função global
+        if (typeof window !== 'undefined') {
+            window.createNotification = createNotification;
+        }
+        
         // Listener para tarefas do usuário
         function setupTasksListener() {
             if (tasksListener) {
@@ -14462,19 +14490,64 @@ _Compartilhado via Sistema CSF_`;
             }
             
             safeLog('🔄 Configurando listener de tarefas para usuário:', userId);
-            tasksListener = db.collection('tasks').where('userId', '==', userId).onSnapshot(snapshot => {
-                tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                safeLog('✅ Tarefas atualizadas:', tasks.length);
-                renderTasks();
-                updateTaskBadge();
-                updateTaskStats();
+            
+            // Função para carregar e combinar tarefas
+            const loadAllTasks = async () => {
+                try {
+                    // Buscar tarefas do usuário
+                    const userTasksSnapshot = await db.collection('tasks').where('userId', '==', userId).get();
+                    const userTasks = userTasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Buscar tarefas atribuídas ao usuário
+                    const assignedTasksSnapshot = await db.collection('tasks').where('assignedTo', '==', userId).get();
+                    const assignedTasks = assignedTasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Combinar e remover duplicatas
+                    const allTasksMap = new Map();
+                    [...userTasks, ...assignedTasks].forEach(task => {
+                        if (!allTasksMap.has(task.id)) {
+                            allTasksMap.set(task.id, task);
+                        }
+                    });
+                    
+                    tasks = Array.from(allTasksMap.values());
+                    safeLog('✅ Tarefas atualizadas:', tasks.length);
+                    renderTasks();
+                    updateTaskBadge();
+                    updateTaskStats();
+                    renderCalendar();
+                } catch (error) {
+                    safeError('Erro ao carregar tarefas:', error);
+                }
+            };
+            
+            // Carregar inicialmente
+            loadAllTasks();
+            
+            // Configurar listeners para ambas as queries
+            const userTasksQuery = db.collection('tasks').where('userId', '==', userId);
+            const assignedTasksQuery = db.collection('tasks').where('assignedTo', '==', userId);
+            
+            const unsubscribers = [];
+            
+            // Listener para tarefas do usuário
+            unsubscribers.push(userTasksQuery.onSnapshot(() => {
+                loadAllTasks();
             }, error => {
-                safeError('Erro ao carregar tarefas:', error);
-                tasks = JSON.parse(localStorage.getItem(`tasks_${userId}`) || '[]');
-                renderTasks();
-                updateTaskBadge();
-                updateTaskStats();
-            });
+                safeError('Erro no listener de tarefas do usuário:', error);
+            }));
+            
+            // Listener para tarefas atribuídas
+            unsubscribers.push(assignedTasksQuery.onSnapshot(() => {
+                loadAllTasks();
+            }, error => {
+                safeError('Erro no listener de tarefas atribuídas:', error);
+            }));
+            
+            // Retornar função para cancelar ambos os listeners
+            tasksListener = () => {
+                unsubscribers.forEach(unsub => unsub());
+            };
         }
         
         function saveCalendarEvents() {
@@ -14546,15 +14619,20 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function deleteCalendarEvent(eventId) {
-            // Verificar permissões se a função estiver disponível
-            if (typeof canDeleteEvent === 'function') {
-                const event = calendarEvents.find(e => e.id === eventId);
-                if (event && !canDeleteEvent(event)) {
-                    if (typeof showToast === 'function') {
-                        showToast('Você não tem permissão para excluir este evento', 'error');
-                    }
-                    return;
-                }
+            // Buscar o evento
+            const event = calendarEvents.find(e => e.id === eventId);
+            if (!event) {
+                showToast('Evento não encontrado', 'error');
+                return;
+            }
+            
+            // Verificar permissões: apenas admin ou quem criou pode deletar
+            const isAdmin = currentUser?.role === 'admin';
+            const isCreator = event.createdBy === currentUser?.id;
+            
+            if (!isAdmin && !isCreator) {
+                showToast('Você não tem permissão para excluir este evento. Apenas o administrador ou quem criou o evento pode excluí-lo.', 'error');
+                return;
             }
             
             if (firebaseAvailable) {
@@ -14562,27 +14640,21 @@ _Compartilhado via Sistema CSF_`;
                     .then(() => {
                         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                         saveCalendarEvents();
-                        if (typeof renderCalendar === 'function') {
-                            renderCalendar();
-                        }
-                        if (typeof showToast === 'function') {
-                            showToast('Evento excluído com sucesso', 'success');
-                        }
+                        renderCalendar();
+                        showToast('Evento excluído com sucesso', 'success');
                     })
                     .catch(error => {
                         safeError('Erro ao excluir evento:', error);
+                        showToast('Erro ao excluir evento', 'error');
                         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                         saveCalendarEvents();
-                        if (typeof renderCalendar === 'function') {
-                            renderCalendar();
-                        }
+                        renderCalendar();
                     });
             } else {
                 calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                 saveCalendarEvents();
-                if (typeof renderCalendar === 'function') {
-                    renderCalendar();
-                }
+                renderCalendar();
+                showToast('Evento excluído com sucesso', 'success');
             }
         }
         
@@ -15077,8 +15149,14 @@ _Compartilhado via Sistema CSF_`;
                 // Eventos personalizados do dia
                 const customEvents = calendarEvents.filter(e => e.date === dateStr);
                 
-                // Tarefas do dia
-                const dayTasksForDate = tasks.filter(t => t.dueDate === dateStr && !t.completed);
+            // Tarefas do dia (incluindo tarefas atribuídas ao usuário)
+            const dayTasksForDate = tasks.filter(t => {
+                const matchesDate = t.dueDate === dateStr;
+                const notCompleted = !t.completed;
+                const isUserTask = t.userId === currentUser?.id;
+                const isAssignedTask = t.assignedTo === currentUser?.id;
+                return matchesDate && notCompleted && (isUserTask || isAssignedTask);
+            });
                 
                 // Contagem para estatísticas
                 events.forEach(c => {
@@ -15119,9 +15197,9 @@ _Compartilhado via Sistema CSF_`;
                 const sortedCustomEvents = [...customEvents].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                 eventsHtml += sortedCustomEvents.slice(0, 1).map(e => {
                     const isOwner = currentUser?.id === e.createdBy;
-                    const ownerLabel = e.createdByName ? ` por ${e.createdByName}` : '';
+                    const ownerLabel = isOwner ? '' : ` • Por: ${e.createdByName || 'Anônimo'}`;
                     const timeLabel = e.time ? `${e.time} - ` : '';
-                    const canDelete = typeof canDeleteEvent === 'function' ? canDeleteEvent(e) : isOwner;
+                    const createdByLabel = e.createdByName ? ` • Criado por: ${e.createdByName}` : '';
                     return `<div class="calendar-event custom-event" 
                                 style="background: ${e.color}; border-left: 3px solid ${e.color};"
                                 data-event-type="event"
@@ -15132,10 +15210,9 @@ _Compartilhado via Sistema CSF_`;
                                 oncontextmenu="showCalendarContextMenu(event, 'event', '${e.id}', '${dateStr}'); return false;"
                                 ondragstart="handleCalendarDragStart(event, 'event', '${e.id}', '${dateStr}')"
                                 ondragend="handleCalendarDragEnd(event)"
-                                title="${timeLabel}${e.title}${ownerLabel}">
-                                <span class="event-time">${e.time ? e.time + ' ' : ''}</span>
-                                <span class="event-title">${e.title}</span>
-                                ${ownerLabel ? `<span class="event-creator" style="font-size: 0.75rem; opacity: 0.8;">${ownerLabel}</span>` : ''}
+                                title="${timeLabel}${e.title}${createdByLabel}">
+                                ${e.time ? '<span style="font-weight: 600;">' + e.time + '</span> ' : ''}${e.title}
+                                ${!isOwner && e.createdByName ? '<span style="font-size: 0.75em; opacity: 0.8; margin-left: 4px;">• ' + e.createdByName + '</span>' : ''}
                             </div>`;
                 }).join('');
                 
@@ -15477,7 +15554,10 @@ _Compartilhado via Sistema CSF_`;
                                     ${e.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(e.description)}</p>` : ''}
                                 </div>
                             </div>
-                            ${!isOwner ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Criado por: ${e.createdByName || 'Anônimo'}</div>` : ''}
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="material-icons" style="font-size: 16px;">person</span>
+                                <span>Criado por: ${e.createdByName || 'Anônimo'}</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -15707,17 +15787,25 @@ _Compartilhado via Sistema CSF_`;
         // Navegação por teclado
         function setupCalendarKeyboardNav() {
             document.addEventListener('keydown', (e) => {
-                // Verificar se atalhos devem ser habilitados (não executar se modal estiver aberto)
-                if (typeof keyboardShortcutsManager !== 'undefined' && !keyboardShortcutsManager.shouldEnableShortcuts()) {
-                    return;
-                }
-                
                 const calendarPage = document.getElementById('calendarPage');
                 if (!calendarPage?.classList.contains('active')) return;
                 
+                // Verificar se algum modal está aberto - desabilitar atalhos nesse caso
+                const activeModals = document.querySelectorAll('.modal-overlay.active, .modal.active');
+                if (activeModals.length > 0) {
+                    // Permitir apenas ESC para fechar modais
+                    if (e.key === 'Escape') {
+                        // Não fazer nada aqui, os modais já tratam isso
+                        return;
+                    }
+                    return; // Não processar outros atalhos quando modal estiver aberto
+                }
+                
                 if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
                     changeMonth(-1);
                 } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
                     changeMonth(1);
                 }
             });
@@ -19205,6 +19293,8 @@ _Compartilhado via Sistema CSF_`;
             const task = {
                 id: generateTaskId(),
                 userId: userId,
+                createdBy: userId,
+                createdByName: currentUser?.name || 'Anônimo',
                 title: taskData.title,
                 description: taskData.description || '',
                 dueDate: taskData.dueDate,
@@ -19215,8 +19305,29 @@ _Compartilhado via Sistema CSF_`;
                 completed: false,
                 completedAt: null,
                 createdAt: new Date().toISOString(),
-                reminders: taskData.reminders || []
+                reminders: taskData.reminders || [],
+                assignedTo: taskData.assignedTo || null,
+                assignedToName: taskData.assignedToName || null
             };
+            
+            // Se a tarefa foi atribuída a outro usuário, também salvar para o usuário mencionado
+            // A tarefa será exibida tanto para quem criou quanto para quem foi mencionado
+            if (taskData.assignedTo && taskData.assignedTo !== userId) {
+                // Criar notificação para o usuário mencionado
+                if (typeof createNotification === 'function') {
+                    createNotification({
+                        userId: taskData.assignedTo,
+                        type: 'task_mentioned',
+                        title: 'Nova Tarefa Atribuída',
+                        message: `${currentUser?.name || 'Alguém'} atribuiu a tarefa "${taskData.title}" para você`,
+                        taskId: task.id,
+                        createdAt: new Date().toISOString(),
+                        read: false
+                    }).catch(error => {
+                        safeError('Erro ao criar notificação:', error);
+                    });
+                }
+            }
             
             if (firebaseAvailable) {
                 db.collection('tasks').doc(task.id).set(task)
@@ -19632,18 +19743,28 @@ _Compartilhado via Sistema CSF_`;
                                             <option value="high">Alta</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Categoria</label>
-                                        <select id="taskCategory" class="form-select">
-                                            <option value="geral">Geral</option>
-                                            <option value="curso">Curso</option>
-                                            <option value="reuniao">Reunião</option>
-                                            <option value="documento">Documento</option>
-                                            <option value="prazo">Prazo</option>
-                                            <option value="outro">Outro</option>
-                                        </select>
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Categoria</label>
+                                    <select id="taskCategory" class="form-select">
+                                        <option value="geral">Geral</option>
+                                        <option value="curso">Curso</option>
+                                        <option value="reuniao">Reunião</option>
+                                        <option value="documento">Documento</option>
+                                        <option value="prazo">Prazo</option>
+                                        <option value="outro">Outro</option>
+                                    </select>
                                 </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Mencionar/Atribuir para outro usuário</label>
+                                <select id="taskAssignedTo" class="form-select">
+                                    <option value="">-- Nenhum (tarefa pessoal) --</option>
+                                </select>
+                                <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                                    Selecione um usuário para atribuir esta tarefa. O usuário será notificado.
+                                </small>
+                            </div>
                                 
                                 <div class="form-group">
                                     <label class="form-label">Subtarefas</label>
@@ -19670,6 +19791,9 @@ _Compartilhado via Sistema CSF_`;
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             
+            // Carregar usuários no select de menção
+            loadUsersForTaskAssignment();
+            
             // Enter para adicionar subtarefa
             document.getElementById('subtaskInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -19677,6 +19801,30 @@ _Compartilhado via Sistema CSF_`;
                     addSubtaskFromInput();
                 }
             });
+        }
+        
+        // Carregar usuários para atribuição de tarefas
+        function loadUsersForTaskAssignment() {
+            const select = document.getElementById('taskAssignedTo');
+            if (!select) return;
+            
+            // Limpar opções existentes (exceto a primeira)
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // Obter usuários do authManager
+            if (typeof authManager !== 'undefined' && authManager.users) {
+                authManager.users.forEach(user => {
+                    // Não mostrar o próprio usuário na lista
+                    if (user.id !== currentUser?.id) {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.name} (${user.username})`;
+                        select.appendChild(option);
+                    }
+                });
+            }
         }
         
         function addSubtaskFromInput() {
@@ -19712,6 +19860,10 @@ _Compartilhado via Sistema CSF_`;
                 completed: false
             }));
             
+            const assignedToValue = document.getElementById('taskAssignedTo').value;
+            const assignedToOption = document.getElementById('taskAssignedTo').selectedOptions[0];
+            const assignedToName = assignedToValue ? assignedToOption.text : null;
+            
             const taskData = {
                 title: document.getElementById('taskTitle').value.trim(),
                 description: document.getElementById('taskDescription').value.trim(),
@@ -19719,7 +19871,9 @@ _Compartilhado via Sistema CSF_`;
                 dueTime: document.getElementById('taskDueTime').value,
                 priority: document.getElementById('taskPriority').value,
                 category: document.getElementById('taskCategory').value,
-                subtasks: subtasks
+                subtasks: subtasks,
+                assignedTo: assignedToValue || null,
+                assignedToName: assignedToName || null
             };
             
             if (editingTaskId) {
@@ -20131,11 +20285,6 @@ _Compartilhado via Sistema CSF_`;
         
         function setupKeyboardShortcuts() {
             document.addEventListener('keydown', (e) => {
-                // Verificar se atalhos devem ser habilitados (não executar se modal estiver aberto)
-                if (typeof keyboardShortcutsManager !== 'undefined' && !keyboardShortcutsManager.shouldEnableShortcuts()) {
-                    return;
-                }
-                
                 const activeElement = document.activeElement;
                 const isInputFocused = activeElement.tagName === 'INPUT' || 
                                        activeElement.tagName === 'TEXTAREA' || 
