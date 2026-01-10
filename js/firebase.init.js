@@ -25,21 +25,39 @@ try {
         storage = firebase.storage();
         firebaseAvailable = true;
         
-        // Verificar disponibilidade do Firestore
-        // Nota: enableMultiTabIndexedDbPersistence está depreciado
-        // Usando a nova API com FirestoreSettings.cache quando disponível
+        // Configurar Firestore com cache persistente
+        // Nota: enablePersistence está depreciado, mas ainda funciona na versão 9.x
+        // Para versões futuras, usar FirestoreSettings.cache
         try {
-            if (db.enablePersistence) {
-                db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+            // Verificar se já não foi inicializado
+            if (db && typeof db.enablePersistence === 'function') {
+                db.enablePersistence({ 
+                    synchronizeTabs: true 
+                }).catch(err => {
+                    // Erros esperados que podem ser ignorados
                     if (err.code === 'failed-precondition') {
-                        safeWarn('Múltiplas abas abertas, persistência apenas na primeira.');
+                        // Múltiplas abas abertas - apenas primeira tem persistência
+                        if (typeof safeWarn === 'function') {
+                            safeWarn('Múltiplas abas abertas, persistência apenas na primeira.');
+                        }
                     } else if (err.code === 'unimplemented') {
-                        safeWarn('Navegador não suporta persistência.');
+                        // Navegador não suporta
+                        if (typeof safeWarn === 'function') {
+                            safeWarn('Navegador não suporta persistência offline.');
+                        }
+                    } else {
+                        // Outros erros - logar mas não bloquear
+                        if (typeof safeError === 'function') {
+                            safeError('Erro ao habilitar persistência do Firestore:', err);
+                        }
                     }
                 });
             }
         } catch (err) {
-            safeWarn('Erro ao habilitar persistência do Firestore:', err);
+            // Erro ao tentar habilitar persistência - não crítico
+            if (typeof safeWarn === 'function') {
+                safeWarn('Persistência offline não disponível:', err.message);
+            }
         }
     }
 } catch (error) {

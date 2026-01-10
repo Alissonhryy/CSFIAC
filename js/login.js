@@ -256,6 +256,17 @@ async function handleLogin(e) {
         // Autenticar usando AuthManager
         const user = await authManager.authenticate(username, password);
         
+        // Verificar se precisa alterar senha
+        if (user.mustChangePassword || user.isDefaultPassword) {
+            if (loginError) loginError.classList.remove('show');
+            loginBtn.classList.remove('loading');
+            loginBtn.disabled = false;
+            
+            // Mostrar modal de alteração de senha obrigatória
+            showPasswordChangeModal(user);
+            return;
+        }
+        
         // Login bem-sucedido
         window.currentUser = user;
         localStorage.setItem('currentUser', JSON.stringify(user));
@@ -293,6 +304,191 @@ async function handleLogin(e) {
         updateBlockUI(username);
         
         safeError('Erro no login:', error);
+    }
+}
+
+/**
+ * Mostra modal para alteração obrigatória de senha
+ * @param {Object} user - Dados do usuário
+ */
+function showPasswordChangeModal(user) {
+    // Criar modal se não existir
+    let modal = document.getElementById('passwordChangeModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'passwordChangeModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>Alteração de Senha Obrigatória</h2>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--warning); margin-bottom: 1.5rem;">
+                        ${user.isDefaultPassword 
+                            ? '⚠️ Você está usando uma senha padrão. Por segurança, é obrigatório alterá-la agora.' 
+                            : '⚠️ Você precisa alterar sua senha para continuar.'}
+                    </p>
+                    <form id="passwordChangeForm">
+                        <div class="form-group">
+                            <label for="currentPasswordChange">Senha Atual</label>
+                            <input type="password" id="currentPasswordChange" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPasswordChange">Nova Senha</label>
+                            <input type="password" id="newPasswordChange" class="form-input" required>
+                            <div id="passwordStrengthIndicator" style="margin-top: 0.5rem;"></div>
+                            <div id="passwordErrors" style="margin-top: 0.5rem; color: var(--danger); font-size: 0.875rem;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPasswordChange">Confirmar Nova Senha</label>
+                            <input type="password" id="confirmPasswordChange" class="form-input" required>
+                            <div id="passwordMatchIndicator" style="margin-top: 0.5rem;"></div>
+                        </div>
+                        <div id="passwordChangeError" class="error-message" style="display: none; margin-bottom: 1rem;"></div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitPasswordChange">Alterar Senha</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Adicionar validação em tempo real se validador estiver disponível
+        if (typeof window !== 'undefined' && window.passwordValidator) {
+            const newPasswordInput = document.getElementById('newPasswordChange');
+            const confirmPasswordInput = document.getElementById('confirmPasswordChange');
+            const strengthIndicator = document.getElementById('passwordStrengthIndicator');
+            const errorsDiv = document.getElementById('passwordErrors');
+            const matchIndicator = document.getElementById('passwordMatchIndicator');
+            
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', () => {
+                    const password = newPasswordInput.value;
+                    if (password) {
+                        const validation = window.passwordValidator.validatePasswordStrength(password);
+                        const strength = window.passwordValidator.calculatePasswordStrength(password);
+                        const strengthMsg = window.passwordValidator.getPasswordStrengthMessage(strength);
+                        
+                        // Mostrar força da senha
+                        strengthIndicator.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span>Força: <strong>${strengthMsg}</strong></span>
+                                <div style="flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${strength}%; background: ${strength < 50 ? 'var(--danger)' : strength < 70 ? 'var(--warning)' : 'var(--success)'};"></div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Mostrar erros
+                        if (!validation.valid) {
+                            errorsDiv.innerHTML = validation.errors.map(err => `• ${err}`).join('<br>');
+                            errorsDiv.style.display = 'block';
+                        } else {
+                            errorsDiv.style.display = 'none';
+                        }
+                    } else {
+                        strengthIndicator.innerHTML = '';
+                        errorsDiv.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Verificar correspondência de senhas
+            if (confirmPasswordInput && newPasswordInput) {
+                confirmPasswordInput.addEventListener('input', () => {
+                    const match = confirmPasswordInput.value === newPasswordInput.value;
+                    if (confirmPasswordInput.value) {
+                        matchIndicator.innerHTML = match 
+                            ? '<span style="color: var(--success);">✓ Senhas coincidem</span>' 
+                            : '<span style="color: var(--danger);">✗ Senhas não coincidem</span>';
+                        matchIndicator.style.display = 'block';
+                    } else {
+                        matchIndicator.style.display = 'none';
+                    }
+                });
+            }
+        }
+        
+        // Handler do formulário
+        const form = document.getElementById('passwordChangeForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handlePasswordChange(user.username);
+            });
+        }
+    }
+    
+    modal.style.display = 'flex';
+}
+
+/**
+ * Handler para alteração de senha
+ * @param {string} username - Nome de usuário
+ */
+async function handlePasswordChange(username) {
+    const currentPassword = document.getElementById('currentPasswordChange').value;
+    const newPassword = document.getElementById('newPasswordChange').value;
+    const confirmPassword = document.getElementById('confirmPasswordChange').value;
+    const errorDiv = document.getElementById('passwordChangeError');
+    const submitBtn = document.getElementById('submitPasswordChange');
+    
+    // Validações básicas
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        errorDiv.textContent = 'Preencha todos os campos';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        errorDiv.textContent = 'As senhas não coincidem';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    // Validar força da senha
+    if (typeof window !== 'undefined' && window.passwordValidator) {
+        const validation = window.passwordValidator.validatePasswordStrength(newPassword);
+        if (!validation.valid) {
+            errorDiv.innerHTML = `Senha inválida:<br>${validation.errors.map(err => `• ${err}`).join('<br>')}`;
+            errorDiv.style.display = 'block';
+            return;
+        }
+    }
+    
+    // Desabilitar botão durante processamento
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Alterando...';
+    errorDiv.style.display = 'none';
+    
+    try {
+        await authManager.changePassword(username, currentPassword, newPassword);
+        
+        // Senha alterada com sucesso
+        if (typeof showToast === 'function') {
+            showToast('Senha alterada com sucesso!', 'success');
+        }
+        
+        // Fechar modal
+        const modal = document.getElementById('passwordChangeModal');
+        if (modal) modal.style.display = 'none';
+        
+        // Fazer login novamente automaticamente
+        const user = await authManager.authenticate(username, newPassword);
+        window.currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        if (typeof showApp === 'function') {
+            showApp();
+        }
+        
+    } catch (error) {
+        errorDiv.textContent = error.message || 'Erro ao alterar senha';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Alterar Senha';
     }
 }
 

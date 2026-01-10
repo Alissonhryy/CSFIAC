@@ -19,6 +19,7 @@
     <title>CSF + Qualificação e Renda</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
     <!-- Adicionando SheetJS para leitura de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Adicionando Chart.js para gráfico pizza -->
@@ -27,8 +28,8 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- JSZip para download de múltiplos arquivos -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <style>
-        :root {
+    <!-- CSS removido - estilos estão em css/styles.css -->
+    <!-- Todo o CSS foi movido para css/styles.css para melhor organização e performance -->
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --primary-light: rgba(99, 102, 241, 0.1);
@@ -11177,24 +11178,72 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBq5qmLy6HAzZAeC4KCVjLfdCM77ttOU3A",
-            authDomain: "csf-iac.firebaseapp.com",
-            projectId: "csf-iac",
-            storageBucket: "csf-iac.firebasestorage.app",
-            messagingSenderId: "484645494526",
-            appId: "1:484645494526:web:f5ecc23c7c0edbca320faf",
-            measurementId: "G-XL3WY01E73"
-        };
+    <!-- Application Scripts - Carregar na ordem correta -->
+    <script src="Config/firebase.config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/error-handler.js"></script>
+    <script src="js/password-validator.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/firebase.init.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/sync-manager.js"></script>
+    <script src="js/calendar-improvements.js"></script>
+    <script src="js/task-mentions.js"></script>
+    <script src="js/keyboard-shortcuts-manager.js"></script>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+    <script>
+        // Firebase já foi inicializado em firebase.init.js
+        // Usar window.db, window.storage, window.firebaseAvailable diretamente
+        // Não declarar variáveis locais 'const db' para evitar conflitos
+        
+        // Função helper para obter db (usa window.db sempre)
+        function getDb() {
+            return window.db;
+        }
+        
+        function getStorage() {
+            return window.storage;
+        }
+        
+        // Criar alias 'db' que aponta para window.db
+        // Isso permite usar 'db.' no código existente sem mudanças
+        // Usar Object.defineProperty para criar getter dinâmico
+        if (typeof window !== 'undefined') {
+            // Criar variável local db como getter
+            Object.defineProperty(window, '_localDb', {
+                get: function() { return window.db; },
+                configurable: true
+            });
+        }
+        
+        // Para uso imediato, criar variável que será atualizada
+        // Mas não usar const para evitar erro de redeclaração
+        var db;
+        var storage;
+        
+        // Atualizar valores quando window.* estiver disponível
+        function updateDbReferences() {
+            db = window.db;
+            storage = window.storage;
+        }
+        
+        // Atualizar imediatamente se já disponível
+        if (typeof window.db !== 'undefined') {
+            updateDbReferences();
+        }
+        
+        // Atualizar após um pequeno delay para garantir que firebase.init.js executou
+        setTimeout(updateDbReferences, 100);
         
         let firebaseAvailable = false;
         let storageAvailable = false;
+        
+        if (typeof window.firebaseAvailable !== 'undefined') {
+            firebaseAvailable = window.firebaseAvailable;
+        }
+        if (typeof window.storageAvailable !== 'undefined') {
+            storageAvailable = window.storageAvailable;
+        }
 
         // ==================== FUNÇÕES DE SEGURANÇA ====================
         // Função para sanitizar strings e prevenir XSS
@@ -11639,8 +11688,23 @@
         }
 
         async function initializeApp() {
+            // Atualizar referências db antes de usar
+            updateDbReferences();
+            
+            // Usar window.db ou db (que agora aponta para window.db)
+            const dbInstance = window.db || db;
+            
+            if (!dbInstance) {
+                safeWarn('Firebase não disponível, usando localStorage');
+                window.firebaseAvailable = false;
+                firebaseAvailable = false;
+                initializeLocalStorage();
+                return;
+            }
+            
             try {
-                await db.collection('_test_connection').doc('test').get();
+                await dbInstance.collection('_test_connection').doc('test').get();
+                window.firebaseAvailable = true;
                 firebaseAvailable = true;
                 safeLog('Firebase conectado com sucesso!');
                 await initializeUsers();
@@ -11649,6 +11713,7 @@
                 setupSettingsSync();
             } catch (error) {
                 safeWarn('Firebase não disponível, usando localStorage:', error.message);
+                window.firebaseAvailable = false;
                 firebaseAvailable = false;
                 initializeLocalStorage();
             }
@@ -12123,6 +12188,11 @@
                 if (document.getElementById('dangerZoneCard')) document.getElementById('dangerZoneCard').style.display = 'none';
                 if (document.getElementById('securityCard')) document.getElementById('securityCard').style.display = 'none';
                 if (document.getElementById('importInstructorsBtn')) document.getElementById('importInstructorsBtn').style.display = 'none';
+            }
+            
+            // Inicializar sincronização Firebase após login
+            if (typeof syncManager !== 'undefined' && firebaseAvailable) {
+                syncManager.initialize();
             }
 
             if (currentUser.role === 'viewer') {
@@ -14476,22 +14546,43 @@ _Compartilhado via Sistema CSF_`;
         }
         
         function deleteCalendarEvent(eventId) {
+            // Verificar permissões se a função estiver disponível
+            if (typeof canDeleteEvent === 'function') {
+                const event = calendarEvents.find(e => e.id === eventId);
+                if (event && !canDeleteEvent(event)) {
+                    if (typeof showToast === 'function') {
+                        showToast('Você não tem permissão para excluir este evento', 'error');
+                    }
+                    return;
+                }
+            }
+            
             if (firebaseAvailable) {
                 db.collection('calendarEvents').doc(eventId).delete()
                     .then(() => {
                         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                         saveCalendarEvents();
+                        if (typeof renderCalendar === 'function') {
+                            renderCalendar();
+                        }
+                        if (typeof showToast === 'function') {
+                            showToast('Evento excluído com sucesso', 'success');
+                        }
                     })
                     .catch(error => {
                         safeError('Erro ao excluir evento:', error);
                         calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                         saveCalendarEvents();
-                        renderCalendar();
+                        if (typeof renderCalendar === 'function') {
+                            renderCalendar();
+                        }
                     });
             } else {
                 calendarEvents = calendarEvents.filter(e => e.id !== eventId);
                 saveCalendarEvents();
-                renderCalendar();
+                if (typeof renderCalendar === 'function') {
+                    renderCalendar();
+                }
             }
         }
         
@@ -15028,8 +15119,9 @@ _Compartilhado via Sistema CSF_`;
                 const sortedCustomEvents = [...customEvents].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                 eventsHtml += sortedCustomEvents.slice(0, 1).map(e => {
                     const isOwner = currentUser?.id === e.createdBy;
-                    const ownerLabel = isOwner ? '' : ` • ${e.createdByName || 'Anônimo'}`;
+                    const ownerLabel = e.createdByName ? ` por ${e.createdByName}` : '';
                     const timeLabel = e.time ? `${e.time} - ` : '';
+                    const canDelete = typeof canDeleteEvent === 'function' ? canDeleteEvent(e) : isOwner;
                     return `<div class="calendar-event custom-event" 
                                 style="background: ${e.color}; border-left: 3px solid ${e.color};"
                                 data-event-type="event"
@@ -15040,7 +15132,11 @@ _Compartilhado via Sistema CSF_`;
                                 oncontextmenu="showCalendarContextMenu(event, 'event', '${e.id}', '${dateStr}'); return false;"
                                 ondragstart="handleCalendarDragStart(event, 'event', '${e.id}', '${dateStr}')"
                                 ondragend="handleCalendarDragEnd(event)"
-                                title="${timeLabel}${e.title}${ownerLabel}">${e.time ? e.time + ' ' : ''}${e.title}</div>`;
+                                title="${timeLabel}${e.title}${ownerLabel}">
+                                <span class="event-time">${e.time ? e.time + ' ' : ''}</span>
+                                <span class="event-title">${e.title}</span>
+                                ${ownerLabel ? `<span class="event-creator" style="font-size: 0.75rem; opacity: 0.8;">${ownerLabel}</span>` : ''}
+                            </div>`;
                 }).join('');
                 
                 // Tarefas do dia (com drag & drop) - usar a variável já declarada acima
@@ -15611,6 +15707,11 @@ _Compartilhado via Sistema CSF_`;
         // Navegação por teclado
         function setupCalendarKeyboardNav() {
             document.addEventListener('keydown', (e) => {
+                // Verificar se atalhos devem ser habilitados (não executar se modal estiver aberto)
+                if (typeof keyboardShortcutsManager !== 'undefined' && !keyboardShortcutsManager.shouldEnableShortcuts()) {
+                    return;
+                }
+                
                 const calendarPage = document.getElementById('calendarPage');
                 if (!calendarPage?.classList.contains('active')) return;
                 
@@ -20030,6 +20131,11 @@ _Compartilhado via Sistema CSF_`;
         
         function setupKeyboardShortcuts() {
             document.addEventListener('keydown', (e) => {
+                // Verificar se atalhos devem ser habilitados (não executar se modal estiver aberto)
+                if (typeof keyboardShortcutsManager !== 'undefined' && !keyboardShortcutsManager.shouldEnableShortcuts()) {
+                    return;
+                }
+                
                 const activeElement = document.activeElement;
                 const isInputFocused = activeElement.tagName === 'INPUT' || 
                                        activeElement.tagName === 'TEXTAREA' || 

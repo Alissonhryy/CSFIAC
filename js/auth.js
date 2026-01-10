@@ -3,9 +3,14 @@
  * 
  * Implementa hash de senhas usando Web Crypto API
  * Remove credenciais hardcoded do código
+ * Força alteração de senhas padrão no primeiro login
+ * 
+ * @class AuthManager
  */
-
 class AuthManager {
+    /**
+     * @constructor
+     */
     constructor() {
         this.loginAttempts = new Map(); // username -> { count, lastAttempt, blockedUntil }
         this.maxAttempts = 5;
@@ -22,7 +27,11 @@ class AuthManager {
             try {
                 return JSON.parse(stored);
             } catch (e) {
-                console.error('Erro ao carregar usuários:', e);
+                if (typeof safeError === 'function') {
+                    safeError('Erro ao carregar usuários:', e);
+                } else {
+                    console.error('Erro ao carregar usuários:', e);
+                }
             }
         }
         
@@ -34,6 +43,9 @@ class AuthManager {
     /**
      * Inicializa usuários padrão com senhas hasheadas
      * As senhas originais são: '032147', 'Iac@123', 'viewer123'
+     * IMPORTANTE: Estes usuários são marcados para forçar alteração de senha no primeiro login
+     * 
+     * @returns {Promise<Array>} Array de usuários padrão
      */
     async initializeDefaultUsers() {
         const defaultUsers = [
@@ -43,7 +55,9 @@ class AuthManager {
                 username: 'Csfiac', 
                 passwordHash: await this.hashPassword('032147'), 
                 role: 'admin',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                mustChangePassword: true, // Forçar alteração no primeiro login
+                isDefaultPassword: true
             },
             { 
                 id: 'editor1', 
@@ -51,7 +65,9 @@ class AuthManager {
                 username: 'Iac', 
                 passwordHash: await this.hashPassword('Iac@123'), 
                 role: 'editor',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                mustChangePassword: true,
+                isDefaultPassword: true
             },
             { 
                 id: 'viewer1', 
@@ -59,7 +75,9 @@ class AuthManager {
                 username: 'viewer', 
                 passwordHash: await this.hashPassword('viewer123'), 
                 role: 'viewer',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                mustChangePassword: true,
+                isDefaultPassword: true
             }
         ];
         
@@ -130,6 +148,10 @@ class AuthManager {
 
     /**
      * Autentica usuário
+     * @param {string} username - Nome de usuário
+     * @param {string} password - Senha do usuário
+     * @returns {Promise<Object>} Objeto com dados do usuário e flag de mudança de senha obrigatória
+     * @throws {Error} Se as credenciais forem inválidas ou conta estiver bloqueada
      */
     async authenticate(username, password) {
         // Verificar se está bloqueado
@@ -161,12 +183,18 @@ class AuthManager {
             id: user.id,
             name: user.name,
             username: user.username,
-            role: user.role
+            role: user.role,
+            mustChangePassword: user.mustChangePassword === true,
+            isDefaultPassword: user.isDefaultPassword === true
         };
     }
 
     /**
      * Cria novo usuário (apenas admin)
+     * @param {Object} userData - Dados do usuário {name, username, password, role}
+     * @param {string} currentUserRole - Papel do usuário atual
+     * @returns {Promise<Object>} Dados do novo usuário criado
+     * @throws {Error} Se validações falharem
      */
     async createUser(userData, currentUserRole) {
         if (currentUserRole !== 'admin') {
@@ -177,6 +205,19 @@ class AuthManager {
         
         if (!name || !username || !password || !role) {
             throw new Error('Todos os campos são obrigatórios');
+        }
+
+        // Validar força da senha se validador estiver disponível
+        if (typeof window !== 'undefined' && window.passwordValidator) {
+            const validation = window.passwordValidator.validatePasswordStrength(password);
+            if (!validation.valid) {
+                throw new Error(`Senha inválida: ${validation.errors.join(', ')}`);
+            }
+        } else {
+            // Validação básica
+            if (password.length < 8) {
+                throw new Error('A senha deve ter no mínimo 8 caracteres');
+            }
         }
 
         if (this.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
@@ -190,7 +231,9 @@ class AuthManager {
             username,
             passwordHash,
             role,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            mustChangePassword: false,
+            isDefaultPassword: false
         };
 
         this.users.push(newUser);
@@ -206,20 +249,61 @@ class AuthManager {
 
     /**
      * Altera senha do usuário
+     * @param {string} username - Nome de usuário
+     * @param {string} oldPassword - Senha atual
+     * @param {string} newPassword - Nova senha
+     * @param {boolean} skipOldPasswordCheck - Se true, pula verificação da senha antiga (para reset por admin)
+     * @returns {Promise<void>}
+     * @throws {Error} Se validações falharem
      */
-    async changePassword(username, oldPassword, newPassword) {
+    async changePassword(username, oldPassword, newPassword, skipOldPasswordCheck = false) {
         const user = this.users.find(u => u.username.toLowerCase() === username.toLowerCase());
         if (!user) {
             throw new Error('Usuário não encontrado');
         }
 
-        const isValid = await this.verifyPassword(oldPassword, user.passwordHash);
-        if (!isValid) {
-            throw new Error('Senha atual incorreta');
+        // Validar força da nova senha
+        if (typeof window !== 'undefined' && window.passwordValidator) {
+            const validation = window.passwordValidator.validatePasswordStrength(newPassword);
+            if (!validation.valid) {
+                throw new Error(`Senha inválida: ${validation.errors.join(', ')}`);
+            }
+        } else {
+            // Validação básica
+            if (newPassword.length < 8) {
+                throw new Error('A senha deve ter no mínimo 8 caracteres');
+            }
+        }
+
+        // Verificar se a nova senha é igual à atual
+        const isSamePassword = await this.verifyPassword(newPassword, user.passwordHash);
+        if (isSamePassword) {
+            throw new Error('A nova senha deve ser diferente da senha atual');
+        }
+
+        // Verificar senha antiga (a menos que seja reset por admin)
+        if (!skipOldPasswordCheck) {
+            const isValid = await this.verifyPassword(oldPassword, user.passwordHash);
+            if (!isValid) {
+                throw new Error('Senha atual incorreta');
+            }
         }
 
         user.passwordHash = await this.hashPassword(newPassword);
+        user.mustChangePassword = false; // Remover flag de mudança obrigatória
+        user.isDefaultPassword = false; // Não é mais senha padrão
+        user.passwordChangedAt = new Date().toISOString();
         this.saveUsers(this.users);
+    }
+
+    /**
+     * Verifica se usuário precisa alterar senha
+     * @param {string} username - Nome de usuário
+     * @returns {boolean} True se precisa alterar senha
+     */
+    needsPasswordChange(username) {
+        const user = this.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+        return user ? (user.mustChangePassword === true) : false;
     }
 
     /**

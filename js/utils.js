@@ -57,11 +57,42 @@ function safeWarn(...args) {
 
 /**
  * Error sempre logado (mas pode ser enviado para serviço de monitoramento)
+ * Em produção, apenas erros críticos são logados
  */
 function safeError(...args) {
-    console.error(...args);
-    // Aqui você pode adicionar envio para serviço de monitoramento
-    // Ex: sendToErrorTracking(...args);
+    // Sempre logar erros, mas apenas em produção se for crítico
+    const errorLevel = args[0]?.level || 'error';
+    const isCritical = errorLevel === 'critical' || errorLevel === 'error';
+    
+    if (isDevelopment || isCritical) {
+        console.error(...args);
+    }
+    
+    // Em produção, enviar para serviço de monitoramento
+    if (!isDevelopment && isCritical && typeof window !== 'undefined') {
+        try {
+            // Aqui você pode integrar com serviços como Sentry, LogRocket, etc.
+            // sendToErrorTracking(...args);
+            
+            // Alternativamente, armazenar erros críticos no localStorage para debug
+            const errorLog = {
+                timestamp: new Date().toISOString(),
+                message: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '),
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            };
+            
+            const errorHistory = JSON.parse(localStorage.getItem('error_logs') || '[]');
+            errorHistory.push(errorLog);
+            // Manter apenas últimos 50 erros
+            if (errorHistory.length > 50) {
+                errorHistory.shift();
+            }
+            localStorage.setItem('error_logs', JSON.stringify(errorHistory));
+        } catch (e) {
+            // Silenciosamente falhar se não conseguir logar
+        }
+    }
 }
 
 // ==================== HELPERS GERAIS ====================
@@ -114,27 +145,55 @@ function formatDate(date, format = 'dd/mm/yyyy') {
 }
 
 /**
- * Valida email
+ * Valida email com regex mais robusta
+ * @param {string} email - Email a ser validado
+ * @returns {boolean} True se o email for válido
  */
 function isValidEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+    if (!email || typeof email !== 'string') return false;
+    
+    // Regex mais robusta para validação de email
+    const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return re.test(email.trim());
 }
 
 /**
- * Valida CPF
+ * Valida CPF com algoritmo completo
+ * @param {string} cpf - CPF a ser validado (com ou sem formatação)
+ * @returns {boolean} True se o CPF for válido
  */
 function isValidCPF(cpf) {
+    if (!cpf || typeof cpf !== 'string') return false;
+    
     cpf = cpf.replace(/[^\d]+/g, '');
-    if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
+    
+    // Verificar tamanho
+    if (cpf.length !== 11) return false;
+    
+    // Verificar se todos os dígitos são iguais (CPFs inválidos como 111.111.111-11)
+    if (!!cpf.match(/(\d)\1{10}/)) return false;
     
     const cpfDigits = cpf.split('').map(el => +el);
-    const rest = (count) => {
-        return cpfDigits.slice(0, count - 12)
-            .reduce((soma, el, index) => soma + el * (count - index), 0) * 10 % 11 % 10;
-    };
     
-    return rest(10) === cpfDigits[9] && rest(11) === cpfDigits[10];
+    // Validar primeiro dígito verificador
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += cpfDigits[i] * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== cpfDigits[9]) return false;
+    
+    // Validar segundo dígito verificador
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += cpfDigits[i] * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== cpfDigits[10]) return false;
+    
+    return true;
 }
 
 /**
