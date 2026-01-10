@@ -11172,6 +11172,10 @@
         <div class="loading-spinner"></div>
     </div>
 
+    <!-- Scripts utilitários -->
+    <script src="utils.js"></script>
+    <script src="auth.js"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -11183,42 +11187,71 @@
 
     <script>
         // ==================== FUNÇÕES DE SEGURANÇA ====================
-        // Função para sanitizar strings e prevenir XSS
-        function escapeHtml(text) {
-            if (text == null) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Função para sanitizar atributos HTML
-        function escapeHtmlAttribute(text) {
-            if (text == null) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#x27;');
-        }
-        
-        // Função para logging condicional (apenas em desenvolvimento)
-        const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        function safeLog(...args) {
-            if (isDevelopment) {
-                console.log(...args);
+        // Funções de segurança já estão definidas em utils.js
+        // Se utils.js não carregou, criar fallbacks
+        if (typeof window.utils === 'undefined' || !window.utils.escapeHtml) {
+            // Função para sanitizar strings e prevenir XSS
+            function escapeHtml(text) {
+                if (text == null) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
-        }
-        
-        function safeWarn(...args) {
-            if (isDevelopment) {
-                console.warn(...args);
+            
+            // Função para sanitizar atributos HTML
+            function escapeHtmlAttribute(text) {
+                if (text == null) return '';
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#x27;');
             }
+            
+            // Exportar para uso global
+            if (typeof window !== 'undefined') {
+                window.escapeHtml = escapeHtml;
+                window.escapeHtmlAttribute = escapeHtmlAttribute;
+            }
+        } else {
+            // Usar funções do utils.js
+            window.escapeHtml = window.utils.escapeHtml;
+            window.escapeHtmlAttribute = window.utils.escapeHtmlAttribute;
         }
         
-        function safeError(...args) {
-            // Erros sempre devem ser logados, mas podem ser enviados para um serviço de monitoramento
-            console.error(...args);
+        // Funções de logging já estão definidas em utils.js
+        // Verificar se utils.js foi carregado, se não, criar fallbacks
+        if (typeof window.utils === 'undefined' || !window.utils.safeLog) {
+            // Fallback se utils.js não carregou
+            const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+            
+            function safeLog(...args) {
+                if (isDev) console.log(...args);
+            }
+            
+            function safeWarn(...args) {
+                if (isDev) console.warn(...args);
+            }
+            
+            function safeError(...args) {
+                console.error(...args);
+            }
+            
+            // Exportar para uso global
+            if (typeof window !== 'undefined') {
+                window.safeLog = safeLog;
+                window.safeWarn = safeWarn;
+                window.safeError = safeError;
+            }
+        } else {
+            // Usar funções do utils.js
+            window.safeLog = window.utils.safeLog;
+            window.safeWarn = window.utils.safeWarn;
+            window.safeError = window.utils.safeError;
+            // Sobrescrever escapeHtml e escapeHtmlAttribute também
+            window.escapeHtml = window.utils.escapeHtml;
+            window.escapeHtmlAttribute = window.utils.escapeHtmlAttribute;
         }
         
         // State
@@ -12311,6 +12344,9 @@
                 
                 // Carregar demandantes em tempo real
                 setupDemandantesListener();
+                
+                // Carregar usuários em tempo real
+                setupUsersListener();
             } else {
                 loadFromLocalStorage();
             }
@@ -15475,7 +15511,14 @@ _Compartilhado via Sistema CSF_`;
             // Buscar todos os eventos do dia
             const dayEvents = cursos.filter(c => (c.inicio === dateStr || c.fim === dateStr));
             const dayCustomEvents = calendarEvents.filter(e => e.date === dateStr);
-            const dayTasks = tasks.filter(t => t.dueDate === dateStr && !t.completed);
+            // Tarefas do dia (incluindo tarefas atribuídas ao usuário)
+            const dayTasks = tasks.filter(t => {
+                const matchesDate = t.dueDate === dateStr;
+                const notCompleted = !t.completed;
+                const isUserTask = t.userId === currentUser?.id;
+                const isAssignedTask = t.assignedTo === currentUser?.id;
+                return matchesDate && notCompleted && (isUserTask || isAssignedTask);
+            });
             
             let html = '';
             
@@ -15576,17 +15619,23 @@ _Compartilhado via Sistema CSF_`;
                 dayTasks.forEach(t => {
                     const taskColor = getEventColor('tarefa', t.completed ? 'Concluído' : 'Pendente');
                     const isOverdue = !t.completed && new Date(t.dueDate) < new Date();
+                    const isAssignedToMe = t.assignedTo === currentUser?.id;
+                    const isMyTask = t.userId === currentUser?.id;
                     
                     html += `
                         <div class="day-event-item" style="border-left: 4px solid ${taskColor}; padding: 1rem; margin-bottom: 1rem; background: var(--surface); border-radius: 8px; cursor: pointer;" onclick="openTaskModal('${t.id}')">
                             <div style="display: flex; justify-content: space-between; align-items: start;">
                                 <div style="flex: 1;">
                                     ${t.dueTime ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">schedule</span> ${t.dueTime}</div>` : ''}
-                                    <h4 style="margin: 0; color: var(--text);">${t.title}</h4>
+                                    <h4 style="margin: 0; color: var(--text);">
+                                        ${isAssignedToMe && !isMyTask ? '<span class="material-icons" style="font-size: 16px; vertical-align: middle; color: var(--primary);">person_add</span> ' : ''}
+                                        ${t.title}
+                                    </h4>
                                     ${t.description ? `<p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(t.description)}</p>` : ''}
                                 </div>
                                 ${isOverdue ? `<span style="color: var(--danger); font-size: 0.85rem;">Atrasada</span>` : ''}
                             </div>
+                            ${isAssignedToMe && !isMyTask && t.createdByName ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--primary); display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 14px;">person</span> Atribuída por: ${t.createdByName}</div>` : ''}
                             ${t.priority ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Prioridade: ${t.priority === 'high' ? 'Alta' : t.priority === 'medium' ? 'Média' : 'Baixa'}</div>` : ''}
                         </div>
                     `;
@@ -19315,11 +19364,12 @@ _Compartilhado via Sistema CSF_`;
             if (taskData.assignedTo && taskData.assignedTo !== userId) {
                 // Criar notificação para o usuário mencionado
                 if (typeof createNotification === 'function') {
+                    const dueDateStr = taskData.dueDate ? new Date(taskData.dueDate).toLocaleDateString('pt-BR') : 'data não definida';
                     createNotification({
                         userId: taskData.assignedTo,
                         type: 'task_mentioned',
                         title: 'Nova Tarefa Atribuída',
-                        message: `${currentUser?.name || 'Alguém'} atribuiu a tarefa "${taskData.title}" para você`,
+                        message: `${currentUser?.name || 'Alguém'} atribuiu a tarefa "${taskData.title}" para você. Data: ${dueDateStr}. A tarefa também está visível no seu calendário.`,
                         taskId: task.id,
                         createdAt: new Date().toISOString(),
                         read: false
@@ -19595,6 +19645,8 @@ _Compartilhado via Sistema CSF_`;
                 const isOverdue = !task.completed && task.dueDate < todayStr;
                 const isToday = task.dueDate === todayStr;
                 const priorityLabels = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+                const isAssignedToMe = task.assignedTo === currentUser?.id;
+                const isMyTask = task.userId === currentUser?.id;
                 
                 let statusClass = '';
                 if (task.completed) statusClass = 'completed';
@@ -19624,10 +19676,14 @@ _Compartilhado via Sistema CSF_`;
                         </div>
                         <div class="task-content">
                             <div class="task-header">
-                                <span class="task-title">${task.title}</span>
+                                <span class="task-title">
+                                    ${isAssignedToMe && !isMyTask ? '<span class="material-icons" style="font-size: 18px; vertical-align: middle; color: var(--primary); margin-right: 4px;">person_add</span>' : ''}
+                                    ${task.title}
+                                </span>
                                 <span class="task-priority ${task.priority}">${priorityLabels[task.priority]}</span>
                             </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                            ${isAssignedToMe && !isMyTask && task.createdByName ? `<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--primary); display: flex; align-items: center; gap: 0.25rem;"><span class="material-icons" style="font-size: 16px;">person</span> Atribuída por: ${task.createdByName}</div>` : ''}
                             <div class="task-meta">
                                 <div class="task-meta-item ${isOverdue ? 'overdue' : ''}">
                                     <span class="material-icons">${isOverdue ? 'warning' : 'event'}</span>
@@ -19673,6 +19729,9 @@ _Compartilhado via Sistema CSF_`;
                 modal = document.getElementById('taskModal');
             }
             
+            // Carregar usuários sempre que o modal for aberto
+            loadUsersForTaskAssignment();
+            
             const form = document.getElementById('taskForm');
             form.reset();
             document.getElementById('subtasksList').innerHTML = '';
@@ -19688,6 +19747,15 @@ _Compartilhado via Sistema CSF_`;
                     document.getElementById('taskPriority').value = task.priority;
                     document.getElementById('taskCategory').value = task.category || 'geral';
                     
+                    // Carregar usuário atribuído se existir
+                    const assignedToSelect = document.getElementById('taskAssignedTo');
+                    if (assignedToSelect && task.assignedTo) {
+                        // Aguardar os usuários serem carregados antes de definir o valor
+                        setTimeout(() => {
+                            assignedToSelect.value = task.assignedTo || '';
+                        }, 100);
+                    }
+                    
                     // Carregar subtarefas
                     if (task.subtasks) {
                         task.subtasks.forEach(st => addSubtaskToList(st.title));
@@ -19696,6 +19764,11 @@ _Compartilhado via Sistema CSF_`;
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Nova Tarefa';
                 document.getElementById('taskDueDate').value = new Date().toISOString().split('T')[0];
+                // Garantir que o campo de atribuição esteja vazio para nova tarefa
+                const assignedToSelect = document.getElementById('taskAssignedTo');
+                if (assignedToSelect) {
+                    assignedToSelect.value = '';
+                }
             }
             
             modal.classList.add('active');
@@ -19804,27 +19877,179 @@ _Compartilhado via Sistema CSF_`;
         }
         
         // Carregar usuários para atribuição de tarefas
-        function loadUsersForTaskAssignment() {
+        async function loadUsersForTaskAssignment() {
             const select = document.getElementById('taskAssignedTo');
-            if (!select) return;
+            if (!select) {
+                safeWarn('Select de atribuição de tarefas não encontrado');
+                return;
+            }
             
             // Limpar opções existentes (exceto a primeira)
             while (select.options.length > 1) {
                 select.remove(1);
             }
             
-            // Obter usuários do authManager
-            if (typeof authManager !== 'undefined' && authManager.users) {
-                authManager.users.forEach(user => {
-                    // Não mostrar o próprio usuário na lista
-                    if (user.id !== currentUser?.id) {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = `${user.name} (${user.username})`;
-                        select.appendChild(option);
-                    }
-                });
+            // Adicionar indicador de carregamento
+            const loadingOption = document.createElement('option');
+            loadingOption.value = '';
+            loadingOption.textContent = 'Carregando usuários...';
+            loadingOption.disabled = true;
+            select.appendChild(loadingOption);
+            
+            let users = [];
+            
+            // Tentar carregar do Firebase primeiro
+            if (firebaseAvailable && typeof db !== 'undefined') {
+                try {
+                    const usersSnapshot = await db.collection('users').get();
+                    users = usersSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            name: data.name,
+                            username: data.username,
+                            role: data.role
+                        };
+                    });
+                    safeLog('✅ Usuários carregados do Firebase:', users.length);
+                } catch (error) {
+                    safeError('Erro ao carregar usuários do Firebase:', error);
+                }
             }
+            
+            // Se não encontrou no Firebase, tentar do authManager
+            if (users.length === 0) {
+                if (typeof window.authManager !== 'undefined' || typeof authManager !== 'undefined') {
+                    const manager = window.authManager || authManager;
+                    users = manager.users || [];
+                    
+                    // Se não há usuários, tentar recarregar
+                    if (users.length === 0) {
+                        try {
+                            users = manager.loadUsers();
+                            manager.users = users;
+                            safeLog('🔄 Usuários recarregados do localStorage:', users.length);
+                            
+                            // Sincronizar usuários com Firebase
+                            if (firebaseAvailable && users.length > 0) {
+                                syncUsersToFirebase(users);
+                            }
+                        } catch (error) {
+                            safeError('Erro ao recarregar usuários:', error);
+                        }
+                    }
+                }
+            }
+            
+            // Remover opção de carregamento
+            if (select.options.length > 1 && select.options[1].textContent === 'Carregando usuários...') {
+                select.remove(1);
+            }
+            
+            // Adicionar usuários ao select
+            users.forEach(user => {
+                // Não mostrar o próprio usuário na lista
+                if (user.id !== currentUser?.id) {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name || 'Usuário'} (${user.username || user.id})`;
+                    select.appendChild(option);
+                }
+            });
+            
+            const loadedCount = select.options.length - 1;
+            safeLog('✅ Usuários carregados no select:', loadedCount);
+            
+            // Se não carregou nenhum usuário, mostrar mensagem
+            if (loadedCount === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-- Nenhum outro usuário disponível --';
+                option.disabled = true;
+                select.appendChild(option);
+            }
+        }
+        
+        // Sincronizar usuários com Firebase
+        async function syncUsersToFirebase(users) {
+            if (!firebaseAvailable || !users || users.length === 0) return;
+            
+            try {
+                const batch = db.batch();
+                let hasChanges = false;
+                
+                for (const user of users) {
+                    // Não sincronizar senhas
+                    const userData = {
+                        id: user.id,
+                        name: user.name,
+                        username: user.username,
+                        role: user.role,
+                        createdAt: user.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    const userRef = db.collection('users').doc(user.id);
+                    batch.set(userRef, userData, { merge: true });
+                    hasChanges = true;
+                }
+                
+                if (hasChanges) {
+                    await batch.commit();
+                    safeLog('✅ Usuários sincronizados com Firebase');
+                }
+            } catch (error) {
+                safeError('Erro ao sincronizar usuários com Firebase:', error);
+            }
+        }
+        
+        // Listener para sincronização de usuários em tempo real
+        let usersListener = null;
+        function setupUsersListener() {
+            if (usersListener) {
+                usersListener();
+            }
+            
+            if (!firebaseAvailable) {
+                return;
+            }
+            
+            usersListener = db.collection('users').onSnapshot(snapshot => {
+                const firebaseUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Atualizar authManager se disponível
+                if (typeof window.authManager !== 'undefined' || typeof authManager !== 'undefined') {
+                    const manager = window.authManager || authManager;
+                    // Mesclar usuários do Firebase com os do localStorage
+                    const localUsers = manager.loadUsers();
+                    const mergedUsers = [...localUsers];
+                    
+                    firebaseUsers.forEach(fbUser => {
+                        const index = mergedUsers.findIndex(u => u.id === fbUser.id);
+                        if (index >= 0) {
+                            // Atualizar usuário existente (sem sobrescrever senha)
+                            mergedUsers[index] = {
+                                ...mergedUsers[index],
+                                name: fbUser.name,
+                                username: fbUser.username,
+                                role: fbUser.role
+                            };
+                        } else {
+                            // Adicionar novo usuário (sem senha, será definida no primeiro login)
+                            mergedUsers.push({
+                                ...fbUser,
+                                passwordHash: '' // Será definido no primeiro login
+                            });
+                        }
+                    });
+                    
+                    manager.saveUsers(mergedUsers);
+                }
+                
+                safeLog('🔄 Usuários atualizados em tempo real:', firebaseUsers.length);
+            }, error => {
+                safeError('Erro ao carregar usuários em tempo real:', error);
+            });
         }
         
         function addSubtaskFromInput() {

@@ -26,20 +26,36 @@ try {
         firebaseAvailable = true;
         
         // Verificar disponibilidade do Firestore
-        // Nota: enableMultiTabIndexedDbPersistence está depreciado
-        // Usando a nova API com FirestoreSettings.cache quando disponível
+        // Nota: enablePersistence pode gerar warnings sobre enableMultiTabIndexedDbPersistence
+        // Este é um warning esperado e não afeta a funcionalidade
         try {
-            if (db.enablePersistence) {
+            if (db && db.enablePersistence) {
+                // Usar a nova API sem o parâmetro depreciado
                 db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+                    // Ignorar erros esperados silenciosamente
                     if (err.code === 'failed-precondition') {
-                        safeWarn('Múltiplas abas abertas, persistência apenas na primeira.');
+                        // Múltiplas abas abertas - comportamento esperado
+                        if (typeof safeWarn === 'function') {
+                            safeWarn('Múltiplas abas abertas, persistência apenas na primeira.');
+                        }
                     } else if (err.code === 'unimplemented') {
-                        safeWarn('Navegador não suporta persistência.');
+                        // Navegador não suporta - comportamento esperado
+                        if (typeof safeWarn === 'function') {
+                            safeWarn('Navegador não suporta persistência.');
+                        }
+                    } else {
+                        // Outros erros devem ser logados
+                        if (typeof safeError === 'function') {
+                            safeError('Erro ao habilitar persistência do Firestore:', err);
+                        }
                     }
                 });
             }
         } catch (err) {
-            safeWarn('Erro ao habilitar persistência do Firestore:', err);
+            // Erro ao tentar habilitar persistência - não crítico
+            if (typeof safeWarn === 'function') {
+                safeWarn('Erro ao habilitar persistência do Firestore:', err);
+            }
         }
     }
 } catch (error) {

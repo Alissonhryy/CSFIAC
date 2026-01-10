@@ -196,6 +196,27 @@ class AuthManager {
         this.users.push(newUser);
         this.saveUsers(this.users);
         
+        // Sincronizar com Firebase se disponível
+        if (typeof window !== 'undefined' && window.firebaseAvailable && window.db) {
+            try {
+                const userDataForFirebase = {
+                    id: newUser.id,
+                    name: newUser.name,
+                    username: newUser.username,
+                    role: newUser.role,
+                    createdAt: newUser.createdAt,
+                    updatedAt: new Date().toISOString()
+                    // Não salvar passwordHash no Firebase por segurança
+                };
+                
+                await window.db.collection('users').doc(newUser.id).set(userDataForFirebase);
+                console.log('✅ Usuário sincronizado com Firebase');
+            } catch (error) {
+                console.error('Erro ao sincronizar usuário com Firebase:', error);
+                // Não falhar a criação se o Firebase falhar
+            }
+        }
+        
         return {
             id: newUser.id,
             name: newUser.name,
