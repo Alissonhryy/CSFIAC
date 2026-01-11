@@ -12270,7 +12270,8 @@
                     loadFromLocalStorage();
                 });
 
-                db.collection('usuarios').onSnapshot(snapshot => {
+                // Listener unificado para coleção 'users' (padronizado)
+                db.collection('users').onSnapshot(snapshot => {
                     usuarios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderUsers();
                     // Update current user name if it changed
@@ -12374,7 +12375,19 @@
             cursos = uniqueCourses;
             instrutores = JSON.parse(localStorage.getItem('instrutores') || '[]');
             demandantes = JSON.parse(localStorage.getItem('demandantes') || '[]');
-            usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            // Carregar usuários do authManager (fonte de verdade)
+            if (typeof window.authManager !== 'undefined' || typeof authManager !== 'undefined') {
+                const manager = window.authManager || authManager;
+                usuarios = manager.loadUsers().map(u => ({
+                    id: u.id,
+                    name: u.name,
+                    username: u.username,
+                    role: u.role,
+                    email: u.email || ''
+                }));
+            } else {
+                usuarios = JSON.parse(localStorage.getItem('auth_users') || '[]');
+            }
             activityLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
             loteNames = JSON.parse(localStorage.getItem('loteNames') || '{}');
             
@@ -17086,23 +17099,87 @@ _Compartilhado via Sistema CSF_`;
 
             try {
                 if (firebaseAvailable) {
-                    if (editingUserId) {
-                        await db.collection('usuarios').doc(editingUserId).update(userData);
-                    } else {
-                        await db.collection('usuarios').add(userData);
-                    }
-                } else {
-                    const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                    if (editingUserId) {
-                        const index = existingUsers.findIndex(u => u.id === editingUserId);
-                        if (index !== -1) {
-                            existingUsers[index] = { ...existingUsers[index], ...userData };
+                    // Usar authManager para criar/atualizar usuário (mantém consistência)
+                    if (typeof authManager !== 'undefined' || typeof window.authManager !== 'undefined') {
+                        const manager = window.authManager || authManager;
+                        
+                        if (editingUserId) {
+                            // Atualizar usuário existente
+                            const userDataForFirebase = {
+                                name: userData.name,
+                                username: userData.username,
+                                role: userData.role,
+                                updatedAt: new Date().toISOString()
+                            };
+                            
+                            // Atualizar no Firebase
+                            await db.collection('users').doc(editingUserId).set(userDataForFirebase, { merge: true });
+                            
+                            // Atualizar no authManager
+                            const localUsers = manager.loadUsers();
+                            const index = localUsers.findIndex(u => u.id === editingUserId);
+                            if (index >= 0) {
+                                localUsers[index] = {
+                                    ...localUsers[index],
+                                    ...userDataForFirebase
+                                };
+                                manager.saveUsers(localUsers);
+                            }
+                        } else {
+                            // Criar novo usuário usando authManager
+                            const newUser = await manager.createUser(userData, currentUser?.role);
+                            
+                            // O authManager.createUser já sincroniza com Firebase, mas vamos garantir
+                            const userDataForFirebase = {
+                                id: newUser.id,
+                                name: newUser.name,
+                                username: newUser.username,
+                                role: newUser.role,
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            };
+                            
+                            await db.collection('users').doc(newUser.id).set(userDataForFirebase);
+                            safeLog('✅ Usuário criado e sincronizado com Firebase');
                         }
                     } else {
-                        userData.id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                        existingUsers.push(userData);
+                        // Fallback se authManager não estiver disponível
+                        if (editingUserId) {
+                            await db.collection('users').doc(editingUserId).set(userData, { merge: true });
+                        } else {
+                            userData.id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            userData.createdAt = new Date().toISOString();
+                            await db.collection('users').doc(userData.id).set(userData);
+                        }
                     }
-                    localStorage.setItem('usuarios', JSON.stringify(existingUsers));
+                } else {
+                    // Fallback para localStorage
+                    if (typeof authManager !== 'undefined' || typeof window.authManager !== 'undefined') {
+                        const manager = window.authManager || authManager;
+                        
+                        if (editingUserId) {
+                            const localUsers = manager.loadUsers();
+                            const index = localUsers.findIndex(u => u.id === editingUserId);
+                            if (index >= 0) {
+                                localUsers[index] = { ...localUsers[index], ...userData };
+                                manager.saveUsers(localUsers);
+                            }
+                        } else {
+                            await manager.createUser(userData, currentUser?.role);
+                        }
+                    } else {
+                        const existingUsers = JSON.parse(localStorage.getItem('auth_users') || '[]');
+                        if (editingUserId) {
+                            const index = existingUsers.findIndex(u => u.id === editingUserId);
+                            if (index !== -1) {
+                                existingUsers[index] = { ...existingUsers[index], ...userData };
+                            }
+                        } else {
+                            userData.id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            existingUsers.push(userData);
+                        }
+                        localStorage.setItem('auth_users', JSON.stringify(existingUsers));
+                    }
                     loadFromLocalStorage();
                 }
                 
