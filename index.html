@@ -11676,6 +11676,7 @@
 
                 db.collection('usuarios').onSnapshot(snapshot => {
                     usuarios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    safeLog('👥 Usuários atualizados do Firebase:', usuarios.length);
                     renderUsers();
                     // Update current user name if it changed
                     if (currentUser && currentUser.id) {
@@ -11723,7 +11724,8 @@
                     }
                 }, error => {
                     safeError('Erro ao carregar usuários:', error);
-                    loadFromLocalStorage();
+                    usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    renderUsers();
                 });
 
                 db.collection('activities').orderBy('timestamp', 'desc').limit(100).onSnapshot(snapshot => {
@@ -14818,11 +14820,14 @@ _Compartilhado via Sistema CSF_`;
 
             try {
                 if (firebaseAvailable) {
+                    // Quando Firebase está disponível, salvar apenas no Firebase
+                    // O listener onSnapshot irá atualizar usuarios automaticamente
                     if (editingUserId) {
-                        await db.collection('usuarios').doc(editingUserId).update(userData);
+                        await db.collection('usuarios').doc(editingUserId).set(userData, { merge: true });
                     } else {
                         await db.collection('usuarios').add(userData);
                     }
+                    // Não chamar renderUsers() aqui - o listener onSnapshot fará isso automaticamente
                 } else {
                     const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
                     if (editingUserId) {
@@ -14884,7 +14889,9 @@ _Compartilhado via Sistema CSF_`;
 
             try {
                 if (firebaseAvailable) {
+                    // Quando Firebase está disponível, atualizar apenas no Firebase
                     await db.collection('usuarios').doc(currentUser.id).update({ password: newPassword });
+                    // O listener onSnapshot irá atualizar usuarios automaticamente
                 } else {
                     const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
                     const index = existingUsers.findIndex(u => u.id === currentUser.id);
@@ -14894,7 +14901,7 @@ _Compartilhado via Sistema CSF_`;
                     }
                 }
 
-                // Atualizar o usuário atual
+                // Atualizar o usuário atual (apenas localmente para a sessão)
                 currentUser.password = newPassword;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
@@ -15036,7 +15043,10 @@ _Compartilhado via Sistema CSF_`;
                 const user = usuarios.find(u => u.id === id);
                 
                 if (firebaseAvailable) {
+                    // Quando Firebase está disponível, excluir apenas no Firebase
+                    // O listener onSnapshot irá atualizar usuarios automaticamente
                     await db.collection('usuarios').doc(id).delete();
+                    // Não chamar renderUsers() aqui - o listener onSnapshot fará isso automaticamente
                 } else {
                     const existingUsers = JSON.parse(localStorage.getItem('usuarios') || '[]');
                     const filteredUsers = existingUsers.filter(u => u.id !== id);
